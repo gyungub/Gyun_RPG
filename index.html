@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>균균 월드</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Black+Han+Sans&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── 오프닝 오버레이 ── */
+    #opening-overlay {
+      position: fixed; inset: 0; z-index: 99999;
+      background: #04020f;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      font-family: 'Jua', sans-serif;
+      overflow: hidden;
+      transition: opacity 0.9s ease;
+    }
+    #opening-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* 배경 오브 */
+    .op-orb {
+      position: absolute; border-radius: 50%;
+      filter: blur(80px); pointer-events: none;
+    }
+    .op-orb1 { width:500px;height:500px; background:radial-gradient(circle,rgba(124,58,237,0.25),transparent 70%); top:-100px;left:-100px; animation:opOrb1 12s ease-in-out infinite; }
+    .op-orb2 { width:400px;height:400px; background:radial-gradient(circle,rgba(255,215,0,0.15),transparent 70%); bottom:-80px;right:-80px; animation:opOrb2 10s ease-in-out infinite; }
+    .op-orb3 { width:300px;height:300px; background:radial-gradient(circle,rgba(0,212,255,0.12),transparent 70%); top:40%;left:60%; animation:opOrb3 14s ease-in-out infinite; }
+    @keyframes opOrb1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(60px,40px)} }
+    @keyframes opOrb2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-50px,-30px)} }
+    @keyframes opOrb3 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-40px,50px)} }
+
+    /* 별 캔버스 */
+    #op-stars { position:absolute;inset:0;z-index:0;pointer-events:none; }
+    /* 파티클 캔버스 */
+    #op-particles { position:absolute;inset:0;z-index:1;pointer-events:none; }
+
+    /* 콘텐츠 */
+    #op-content {
+      position: relative; z-index: 10;
+      display: flex; flex-direction: column;
+      align-items: center; text-align: center;
+    }
+
+    .op-sub {
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 0.9rem; letter-spacing: 6px;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 12px;
+      opacity: 0; animation: opFadeUp 1s ease 0.4s forwards;
+    }
+    .op-title {
+      font-family: 'Black Han Sans', sans-serif;
+      font-size: clamp(3.5rem, 10vw, 7rem);
+      line-height: 1;
+      background: linear-gradient(135deg,#ffd700 0%,#ff8c00 40%,#ff1493 70%,#00d4ff 100%);
+      background-size: 300% 300%;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      animation: opFadeUp 1s ease 0.4s both, opGrad 4s ease infinite;
+      filter: drop-shadow(0 0 40px rgba(255,215,0,0.3));
+      margin-bottom: 6px;
+    }
+    .op-en {
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: clamp(0.75rem,2vw,1rem);
+      letter-spacing: 8px; color: rgba(255,255,255,0.25);
+      opacity:0; animation: opFadeUp 1s ease 0.6s forwards;
+    }
+    #op-icon {
+      font-size: clamp(4rem,12vw,7rem);
+      margin: 28px 0 22px;
+      opacity:0;
+      animation: opPopIn 0.7s cubic-bezier(0.34,1.56,0.64,1) 1.2s forwards, opBob 3s ease-in-out 2s infinite;
+      filter: drop-shadow(0 0 30px rgba(255,215,0,0.5));
+    }
+    #op-tagline {
+      font-size: clamp(0.85rem,2.5vw,1.2rem);
+      color: rgba(255,255,255,0.6); min-height:1.8em;
+      letter-spacing:1px;
+      opacity:0; animation: opFadeUp 0.5s ease 1.9s forwards;
+    }
+    .op-cursor {
+      display:inline-block; width:2px; height:1em;
+      background:#ffd700; margin-left:3px;
+      vertical-align:middle;
+      animation: opBlink 0.7s step-end infinite;
+    }
+    #op-btn {
+      margin-top: 40px;
+      padding: 17px 54px;
+      font-family: 'Black Han Sans', sans-serif;
+      font-size: clamp(1.1rem,3vw,1.5rem);
+      color: #1a1a2e;
+      background: linear-gradient(135deg,#ffd700,#ff8c00);
+      border: none; border-radius: 60px; cursor: pointer;
+      letter-spacing: 2px;
+      box-shadow: 0 0 40px rgba(255,215,0,0.3), 0 8px 28px rgba(0,0,0,0.4);
+      opacity:0; transform:translateY(20px);
+      animation: opFadeUp 0.8s ease 2.6s forwards;
+      transition: transform 0.15s, box-shadow 0.15s;
+      position: relative; overflow: hidden;
+    }
+    #op-btn:hover { transform:translateY(-4px) scale(1.04); box-shadow:0 0 60px rgba(255,215,0,0.55),0 12px 36px rgba(0,0,0,0.5); }
+    #op-btn:active { transform:scale(0.97); }
+    #op-version {
+      position:absolute; bottom:18px; right:22px;
+      font-size:0.72rem; color:rgba(255,255,255,0.18); letter-spacing:2px;
+    }
+
+    /* 키프레임 */
+    @keyframes opFadeUp { to{opacity:1;transform:translateY(0)} }
+    @keyframes opPopIn  { to{opacity:1;transform:scale(1)} }
+    @keyframes opBob    { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-14px) rotate(2deg)} }
+    @keyframes opGrad   { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+    @keyframes opBlink  { 0%,100%{opacity:1} 50%{opacity:0} }
+  </style>
+</head>
+<body>
+
+  <!-- ══════════════ 오프닝 오버레이 ══════════════ -->
+  <div id="opening-overlay">
+    <div class="op-orb op-orb1"></div>
+    <div class="op-orb op-orb2"></div>
+    <div class="op-orb op-orb3"></div>
+    <canvas id="op-stars"></canvas>
+    <canvas id="op-particles"></canvas>
+    <div id="op-content">
+      <p class="op-sub">GYUN GYUN WORLD</p>
+      <h1 class="op-title">균균 월드</h1>
+      <p class="op-en">THE GYUN UNIVERSE</p>
+      <span id="op-icon">👑</span>
+      <p id="op-tagline"><span id="op-typing"></span><span class="op-cursor"></span></p>
+      <button id="op-btn" onclick="openingStart()">⚡ 게임 시작</button>
+    </div>
+    <div id="op-version">v1.0.0 · GYUN STUDIOS</div>
+  </div>
+
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- 균균 밈 뽑기 화면 -->
+  <div id="gacha-screen" style="display:none;">
+    <div class="container">
+      <header>
+        <h1>💥 균균 밈 뽑기 💥</h1>
+        <p class="subtitle">GYUN GYUN GACHA</p>
+      </header>
+      <div class="gacha-machine">
+        <div id="result"></div>
+        <div class="button-group">
+          <button class="btn btn-primary" onclick="pull()">🎰 뽑기</button>
+          <button class="btn btn-auto" onclick="startAutoRoll()">⚡ 오토롤</button>
+          <button class="btn btn-stop" onclick="stopAutoRoll()">⛔ 중지</button>
+        </div>
+        <div class="button-group">
+          <button class="btn btn-secondary" onclick="toggleCollection()">📖 도감</button>
+          <button class="btn btn-secondary" onclick="toggleInventory()">🎒 가방</button>
+        </div>
+      </div>
+      <div id="collection" class="panel">
+        <h2>📖 캐릭터 도감</h2>
+        <div id="collection-list" class="panel-list"></div>
+      </div>
+      <div id="inventory" class="panel">
+        <h2>🎒 내 가방</h2>
+        <div id="inventory-list" class="panel-list"></div>
+      </div>
+    </div>
+    <div id="cutscene">
+      <p id="cutscene-text"></p>
+      <button class="btn btn-primary" onclick="closeCutscene()">닫기</button>
+    </div>
+    <button onclick="closeGacha()" style="position:fixed;top:25px;left:25px;padding:12px 28px;background:#1a1a2e;color:white;border:2px solid rgba(255,255,255,0.2);border-radius:50px;font-size:1.1rem;cursor:pointer;z-index:10001;">← 맵으로 돌아가기</button>
+  </div>
+
+  <!-- 균 숭배하기 화면 -->
+  <div id="worship-screen" style="display:none;">
+    <button onclick="closeWorship()" style="position:fixed;top:25px;left:25px;padding:12px 28px;background:#1a0a2e;color:white;border:2px solid rgba(255,255,255,0.2);border-radius:50px;font-size:1.1rem;cursor:pointer;z-index:10001;">← 맵으로 돌아가기</button>
+    <div class="worship-container">
+      <div class="worship-header">
+        <div class="worship-crown">👑</div>
+        <h1 class="worship-title">균 교</h1>
+        <p class="worship-subtitle">GYUN OFFICIAL — 균을 믿으면 구원받는다</p>
+        <div class="worship-ticker">✦ 균은 위대하다 &nbsp;&nbsp;&nbsp; ✦ 균을 숭배하라 &nbsp;&nbsp;&nbsp; ✦ 오늘도 균은 옳다 &nbsp;&nbsp;&nbsp; ✦ 균 없이는 살 수 없다 &nbsp;&nbsp;&nbsp; ✦ 균균균균균 &nbsp;&nbsp;&nbsp;</div>
+      </div>
+      <section class="worship-section">
+        <h2 class="worship-section-title">⛩️ 균의 신전</h2>
+        <p class="worship-section-desc">균상을 눌러 경배하거나, 헌납물을 바쳐 균의 축복을 받으시오.</p>
+        <div class="worship-temple">
+          <div id="gyun-statue" onclick="doWorship()" class="gyun-statue">👑</div>
+          <p class="worship-count-text">총 경배 수: <span id="worship-count">0</span>회</p>
+          <p id="worship-msg" class="worship-msg">균상을 눌러 경배하시오.</p>
+          <div class="donate-group">
+            <button class="donate-btn" onclick="donate('🍗 치킨')">🍗 치킨 헌납</button>
+            <button class="donate-btn" onclick="donate('☕ 커피')">☕ 커피 헌납</button>
+            <button class="donate-btn" onclick="donate('💬 칭찬')">💬 칭찬 헌납</button>
+            <button class="donate-btn" onclick="donate('✨ 영혼')">✨ 영혼 헌납</button>
+          </div>
+        </div>
+      </section>
+      <section class="worship-section">
+        <h2 class="worship-section-title">⚡ 균력 측정기</h2>
+        <p class="worship-section-desc">오늘 당신의 균력(均力)을 과학적으로 측정합니다.</p>
+        <div class="gyunforce-box">
+          <button id="measure-btn" class="measure-btn" onclick="measureGyunforce()">▶ 균력 측정 시작</button>
+          <div class="gyunforce-bars">
+            <div class="gyunforce-row">
+              <span>균 친화력</span>
+              <div class="gyunforce-track"><div id="gyunforce-1" class="gyunforce-bar bar1" data-target="80" style="width:0%"></div></div>
+              <span id="gyunforce-1-val">0%</span>
+            </div>
+            <div class="gyunforce-row">
+              <span>카리스마</span>
+              <div class="gyunforce-track"><div id="gyunforce-2" class="gyunforce-bar bar2" data-target="65" style="width:0%"></div></div>
+              <span id="gyunforce-2-val">0%</span>
+            </div>
+            <div class="gyunforce-row">
+              <span>밈 지수</span>
+              <div class="gyunforce-track"><div id="gyunforce-3" class="gyunforce-bar bar3" data-target="90" style="width:0%"></div></div>
+              <span id="gyunforce-3-val">0%</span>
+            </div>
+            <div class="gyunforce-row">
+              <span>균 수용력</span>
+              <div class="gyunforce-track"><div id="gyunforce-4" class="gyunforce-bar bar4" data-target="75" style="width:0%"></div></div>
+              <span id="gyunforce-4-val">0%</span>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="worship-section">
+        <h2 class="worship-section-title">📜 균교 7대 교리</h2>
+        <p class="worship-section-desc">이를 마음에 새기는 자에게 균의 은총이 임한다.</p>
+        <div class="doctrines">
+          <div class="doctrine-card"><div class="doctrine-num">제 1조</div><div class="doctrine-title">균은 언제나 옳다.</div><p>설령 틀린 것처럼 보일지라도, 그것은 균이 틀린 것이 아니라 세상이 아직 균을 이해 못 한 것이다.</p></div>
+          <div class="doctrine-card"><div class="doctrine-num">제 2조</div><div class="doctrine-title">균균균균균.</div><p>이 다섯 글자에 모든 진리가 담겨 있다. 더 이상의 설명은 생략한다.</p></div>
+          <div class="doctrine-card"><div class="doctrine-num">제 3조</div><div class="doctrine-title">균을 숭배하는 자는 치킨을 얻는다.</div><p>균교는 차별하지 않는다. 다만, 신도에게 더 잘한다.</p></div>
+          <div class="doctrine-card"><div class="doctrine-num">제 4조</div><div class="doctrine-title">균의 말을 의심하는 것은 자유이나.</div><p>균교는 자유의지를 존중한다. 균은 그냥 지켜볼 것이다.</p></div>
+          <div class="doctrine-card"><div class="doctrine-num">제 5조</div><div class="doctrine-title">하루에 한 번 이상 "균균"을 외쳐야 한다.</div><p>시간, 장소, 상황을 가리지 않는다. 회의 중이어도 괜찮다. 오히려 좋다.</p></div>
+          <div class="doctrine-card"><div class="doctrine-num">제 6조</div><div class="doctrine-title">균에게 헌납된 치킨은 균이 대신 먹는다.</div><p>신성한 의식이므로 균이 치킨을 먹는 것을 방해하지 마시오.</p></div>
+          <div class="doctrine-card"><div class="doctrine-num">제 7조</div><div class="doctrine-title">균은 영원하다.</div><p>균이 아무리 이상한 말을 해도 신도들은 박수를 쳐야 한다.</p></div>
+        </div>
+      </section>
+      <section class="worship-section">
+        <h2 class="worship-section-title">🎴 균언 뽑기</h2>
+        <p class="worship-section-desc">균의 신탁을 받으시오.</p>
+        <div class="gyunword-box">
+          <p id="gyun-word-result" class="gyun-word-result">뽑기를 눌러 균의 말씀을 받으시오</p>
+          <button class="measure-btn" onclick="pullGyunWord()">✦ 균언 뽑기 ✦</button>
+        </div>
+      </section>
+      <section class="worship-section">
+        <h2 class="worship-section-title">🪪 신도증 발급</h2>
+        <p class="worship-section-desc">이름을 입력하면 즉시 발급됩니다.</p>
+        <div class="card-wrap">
+          <div class="gyun-card">
+            <div class="card-icon">👤</div>
+            <div id="card-name" class="card-name">홍길동</div>
+            <div id="card-rank" class="card-rank">균교 입문자</div>
+            <div class="card-rows">
+              <div class="card-row"><span>신도번호</span><span id="card-num">GYN-00001</span></div>
+              <div class="card-row"><span>입교일</span><span id="card-date">—</span></div>
+              <div class="card-row"><span>균력등급</span><span id="card-grade">C등급</span></div>
+              <div class="card-row"><span>총 경배수</span><span id="card-worship">0회</span></div>
+            </div>
+          </div>
+          <input id="gyun-name-input" class="name-input" type="text" placeholder="이름을 입력하세요" oninput="updateCard()" maxlength="10">
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- 균들과 싸우기 화면 -->
+  <div id="battle-screen" style="display:none;">
+    <button onclick="closeBattle()" style="position:fixed;top:25px;left:25px;padding:12px 28px;background:#1a0a0a;color:white;border:2px solid rgba(255,100,100,0.4);border-radius:50px;font-size:1.1rem;cursor:pointer;z-index:10001;">← 맵으로 돌아가기</button>
+    <div style="position:fixed;top:20px;right:20px;background:rgba(0,0,0,0.7);border:1px solid rgba(255,100,100,0.3);border-radius:14px;padding:16px 20px;z-index:10001;font-family:'Jua',sans-serif;min-width:200px;">
+      <div style="color:#ef4444;font-size:1.1rem;margin-bottom:8px;">⚔️ 스테이지 <span id="b-stage">1</span> / 10</div>
+      <div style="color:#ffd700;margin-bottom:6px;">Lv.<span id="b-level">1</span> &nbsp; 💰<span id="b-coins">0</span></div>
+      <div style="color:#fff;font-size:0.85rem;margin-bottom:3px;">HP</div>
+      <div style="background:#333;border-radius:99px;height:10px;margin-bottom:6px;">
+        <div id="b-hp-bar" style="background:linear-gradient(90deg,#ef4444,#ff6b6b);height:100%;border-radius:99px;width:100%;transition:width 0.2s;"></div>
+      </div>
+      <div id="b-hp-text" style="color:#fff;font-size:0.8rem;margin-bottom:8px;">100/100</div>
+      <div style="color:#fff;font-size:0.85rem;margin-bottom:3px;">EXP</div>
+      <div style="background:#333;border-radius:99px;height:8px;">
+        <div id="b-exp-bar" style="background:linear-gradient(90deg,#8b5cf6,#a78bfa);height:100%;border-radius:99px;width:0%;transition:width 0.3s;"></div>
+      </div>
+    </div>
+    <div style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);border:1px solid rgba(255,100,100,0.3);border-radius:12px;padding:10px 24px;z-index:10001;font-family:'Jua',sans-serif;color:#fff;font-size:1rem;text-align:center;">
+      <span style="color:#ffd700;">Space / Z</span> 공격 &nbsp;&nbsp; <span style="color:#4ade80;">Q</span> 균즙 &nbsp;&nbsp; <span style="color:#f97316;">R</span> 광폭 &nbsp;&nbsp; <span style="color:#ef4444;">균에게 다가가면 자동 반격!</span>
+    </div>
+    <div style="position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:10002;display:flex;gap:12px;">
+      <button id="b-next-btn" onclick="nextStage()" style="display:none;padding:14px 32px;background:linear-gradient(135deg,#ffd700,#ff8c00);border:none;border-radius:16px;font-family:'Jua',sans-serif;font-size:1.1rem;cursor:pointer;color:#1a1a2e;">다음 스테이지 →</button>
+      <button id="b-retry-btn" onclick="retryBattle()" style="display:none;padding:14px 32px;background:linear-gradient(135deg,#ef4444,#ff1744);border:none;border-radius:16px;font-family:'Jua',sans-serif;font-size:1.1rem;cursor:pointer;color:white;">다시 시도</button>
+    </div>
+    <canvas id="battleCanvas" style="display:block;width:100%;height:100%;"></canvas>
+  </div>
+
+  <div id="controls-hint">
+    <span>WASD</span> / <span>↑↓←→</span> 이동<br>
+    <span>F</span> 장소 입장<br>
+    <span>E</span> NPC 대화
+  </div>
+  <script src="input.js"></script>
+  <script src="map.js"></script>
+  <script src="player.js"></script>
+  <script src="characters.js"></script>
+  <script src="cutscene.js"></script>
+  <script src="worship.js"></script>
+  <script src="battle.js"></script>
+  <script src="skill.js"></script>
+  <script src="fanatic.js"></script>
+  <script src="bloodKnight.js"></script>
+  <script src="forbiddenMage.js"></script>
+  <script src="npc.js"></script>
+  <script src="job.js"></script>
+  <script src="cultmap.js"></script>
+  <script src="centralaltar.js"></script>
+  <script src="altar-faith.js"></script>
+  <script src="altar-mutation.js"></script>
+  <script src="altar-abyss.js"></script>
+  <script src="altar-truth.js"></script>
+  <script src="librarymap.js"></script>
+  <script src="readingroom.js"></script>
+  <script src="readingroom-interaction.js"></script>
+  <script src="sealedroom.js"></script>
+  <script src="upgraderoom.js"></script>
+  <script src="upgraderoom-interaction.js"></script>
+  <script src="skillroom.js"></script>
+  <script src="skillroom-interaction.js"></script>
+  <script src="main.js"></script>
+
+  <!-- 상점 UI -->
+  <div id="shop-dialogue-box" style="display:none;">
+    <div class="npc-dialogue-container" style="max-width:560px;">
+      <div class="npc-dialogue-header" style="background:linear-gradient(135deg,#b8860b,#ffd700);">
+        <h3>🧑 상인의 상점</h3>
+        <button onclick="closeShop()" class="npc-close-btn">×</button>
+      </div>
+      <div class="npc-dialogue-body" style="flex-direction:column;align-items:stretch;gap:0;padding:14px;">
+        <p style="color:#ffd700;margin-bottom:10px;font-family:'Jua',sans-serif;">💰 보유 코인: <span id="shop-coins">0</span></p>
+        <div id="shop-items" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NPC 대사 박스 -->
+  <div id="npc-dialogue-box" style="display:none;">
+    <div class="npc-dialogue-container">
+      <div class="npc-dialogue-header">
+        <h3 id="npc-dialogue-name">NPC</h3>
+        <button onclick="closeNPCDialogue()" class="npc-close-btn">×</button>
+      </div>
+      <div class="npc-dialogue-body">
+        <p id="npc-dialogue-text">대사</p>
+      </div>
+      <div id="npc-job-buttons" class="npc-job-buttons" style="display:none;"></div>
+      <div class="npc-dialogue-footer" id="npc-dialogue-footer">
+        <button onclick="nextNPCDialogue()" class="npc-next-btn">다음 ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // ══════════════ 오프닝 스크립트 ══════════════
+  (function() {
+    // 별 배경
+    const sc = document.getElementById('op-stars');
+    const sctx = sc.getContext('2d');
+    let stars = [];
+    function resizeStar() {
+      sc.width = window.innerWidth; sc.height = window.innerHeight;
+      stars = [];
+      for (let i=0;i<200;i++) stars.push({
+        x:Math.random()*sc.width, y:Math.random()*sc.height,
+        r:Math.random()*1.5+0.3, delay:Math.random()*4, dur:Math.random()*3+2
+      });
+    }
+    function drawStars(t) {
+      if (!document.getElementById('opening-overlay').classList.contains('hidden')) {
+        sctx.clearRect(0,0,sc.width,sc.height);
+        for(const s of stars){
+          const a=0.15+0.7*Math.abs(Math.sin(((t/1000/s.dur)+s.delay)*Math.PI));
+          sctx.beginPath(); sctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+          sctx.fillStyle=`rgba(255,255,255,${a})`; sctx.fill();
+        }
+      }
+      requestAnimationFrame(drawStars);
+    }
+    window.addEventListener('resize', resizeStar);
+    resizeStar(); requestAnimationFrame(drawStars);
+
+    // 파티클
+    const pc = document.getElementById('op-particles');
+    const pctx = pc.getContext('2d');
+    let particles = [];
+    function resizePart(){ pc.width=window.innerWidth; pc.height=window.innerHeight; }
+    window.addEventListener('resize', resizePart); resizePart();
+    const pcols = ['#ffd700','#ff8c00','#ff1493','#00d4ff','#a78bfa'];
+    function partLoop() {
+      if (!document.getElementById('opening-overlay').classList.contains('hidden')) {
+        pctx.clearRect(0,0,pc.width,pc.height);
+        if(Math.random()<0.4) particles.push({
+          x:Math.random()*pc.width, y:pc.height+10,
+          vx:(Math.random()-0.5)*1.2, vy:-(Math.random()*1.5+0.5),
+          r:Math.random()*3+1, color:pcols[Math.floor(Math.random()*pcols.length)],
+          life:1, decay:Math.random()*0.004+0.002
+        });
+        for(let i=particles.length-1;i>=0;i--){
+          const p=particles[i]; p.x+=p.vx; p.y+=p.vy; p.life-=p.decay;
+          if(p.life<=0){particles.splice(i,1);continue;}
+          pctx.globalAlpha=p.life*0.7;
+          pctx.beginPath(); pctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+          pctx.fillStyle=p.color; pctx.fill();
+        }
+        pctx.globalAlpha=1;
+      }
+      requestAnimationFrame(partLoop);
+    }
+    partLoop();
+
+    // 타이핑
+    const msgs = ['균을 믿으면 구원받는다.','균균균균균.','최강의 균을 뽑아라!','균들과 싸워 살아남아라.','오늘도 균은 옳다.'];
+    let mi=0,ci=0,del=false;
+    const tel = document.getElementById('op-typing');
+    function tick(){
+      const msg=msgs[mi];
+      if(!del){ ci++; tel.textContent=msg.slice(0,ci); if(ci>=msg.length){del=true;setTimeout(tick,1800);return;} setTimeout(tick,80); }
+      else { ci--; tel.textContent=msg.slice(0,ci); if(ci<=0){del=false;mi=(mi+1)%msgs.length;setTimeout(tick,400);return;} setTimeout(tick,40); }
+    }
+    setTimeout(tick, 2300);
+
+    // 엔터/스페이스로 시작
+    window.addEventListener('keydown',(e)=>{
+      if((e.key==='Enter'||e.key===' ') && !document.getElementById('opening-overlay').classList.contains('hidden')){
+        e.preventDefault(); openingStart();
+      }
+    });
+  })();
+
+  function openingStart() {
+    const ov = document.getElementById('opening-overlay');
+    ov.classList.add('hidden');
+    setTimeout(() => {
+      ov.style.display = 'none';
+      loop(); // 오프닝 끝난 후 게임 루프 시작
+    }, 950);
+  }
+  </script>
+</body>
+</html>
+

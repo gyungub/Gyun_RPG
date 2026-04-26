@@ -1,0 +1,434 @@
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+canvas { display: block; }
+
+#controls-hint {
+  position: fixed; bottom: 14px; left: 14px;
+  background: rgba(0,0,0,0.6); color: #e5e7eb;
+  font-size: 12px; padding: 8px 14px; border-radius: 8px;
+  line-height: 1.9; pointer-events: none;
+  font-family: 'Noto Sans KR', sans-serif; z-index: 100;
+}
+#controls-hint span { color: #fde68a; font-weight: bold; }
+
+/* ===== 가챠 화면 ===== */
+#gacha-screen {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: radial-gradient(ellipse at 10% 20%, rgba(128,0,255,0.15) 0%, transparent 50%),
+              radial-gradient(ellipse at 90% 80%, rgba(0,200,255,0.1) 0%, transparent 50%),
+              linear-gradient(180deg, #0a0a1a 0%, #1a1a2e 50%, #0f0f23 100%);
+  color: white; overflow-y: auto; z-index: 9999;
+  font-family: 'Jua', sans-serif;
+}
+.container { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; padding: 20px; }
+header { padding: 60px 0 20px; }
+h1 {
+  font-family: 'Black Han Sans', sans-serif; font-size: 3.5rem;
+  background: linear-gradient(135deg, #ffd700, #ff6b35, #ff1493, #00d4ff);
+  background-size: 300% 300%;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  animation: gradientMove 3s ease infinite;
+  filter: drop-shadow(0 0 20px rgba(255,215,0,0.5));
+}
+@keyframes gradientMove { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+.subtitle { font-size: 1.1rem; color: rgba(255,255,255,0.6); letter-spacing: 3px; }
+
+.gacha-machine {
+  background: linear-gradient(145deg, rgba(30,30,60,0.8), rgba(20,20,40,0.9));
+  border-radius: 30px; padding: 40px 30px; margin: 30px auto;
+  position: relative; box-shadow: 0 0 60px rgba(128,0,255,0.2);
+}
+.gacha-machine::before {
+  content: ''; position: absolute; top: -3px; left: -3px; right: -3px; bottom: -3px;
+  background: linear-gradient(135deg, #ff6b35, #ff1493, #8b5cf6, #00d4ff, #ff6b35);
+  background-size: 400% 400%; border-radius: 32px; z-index: -1;
+  animation: borderGlow 4s linear infinite;
+}
+@keyframes borderGlow { 0%{background-position:0% 50%} 100%{background-position:400% 50%} }
+
+#result {
+  min-height: 120px; display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; font-weight: bold;
+  background: rgba(0,0,0,0.3); border-radius: 20px; margin-bottom: 30px;
+  padding: 20px; border: 2px solid rgba(255,255,255,0.1);
+  flex-direction: column; gap: 10px;
+}
+
+.button-group { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-bottom: 20px; }
+.btn {
+  padding: 16px 32px; border: none; border-radius: 16px; cursor: pointer;
+  font-family: 'Jua', sans-serif; font-size: 1.2rem; font-weight: bold;
+  transition: all 0.3s ease; position: relative; overflow: hidden;
+}
+.btn:hover { transform: translateY(-3px) scale(1.05); }
+.btn-primary { background: linear-gradient(135deg, #ffd700, #ff8c00); color: #1a1a2e; box-shadow: 0 8px 25px rgba(255,215,0,0.4); }
+.btn-auto { background: linear-gradient(135deg, #00d4ff, #0099ff); color: white; }
+.btn-stop { background: linear-gradient(135deg, #ff4757, #ff1744); color: white; }
+.btn-secondary { background: rgba(255,255,255,0.1); color: white; border: 2px solid rgba(255,255,255,0.2); }
+
+.panel {
+  display: none; margin: 25px auto; padding: 25px;
+  background: linear-gradient(145deg, rgba(30,30,60,0.9), rgba(20,20,40,0.95));
+  border-radius: 20px; max-width: 650px; border: 2px solid rgba(255,255,255,0.1);
+}
+.panel h2 { font-size: 1.8rem; margin-bottom: 20px; color: #ffd700; }
+.panel-list { max-height: 400px; overflow-y: auto; padding-right: 10px; }
+.panel-list::-webkit-scrollbar { width: 8px; }
+.panel-list::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #8b5cf6, #6366f1); border-radius: 10px; }
+
+.char-entry {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 15px; margin-bottom: 8px;
+  background: rgba(255,255,255,0.03); border-radius: 12px;
+  border-left: 4px solid transparent; transition: all 0.2s; gap: 10px;
+}
+.char-entry:hover { background: rgba(255,255,255,0.08); transform: translateX(5px); }
+.char-entry > span:first-child { flex: 1; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.char-entry-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+.char-entry.grade-일반  { border-left-color: #9ca3af; }
+.char-entry.grade-희귀  { border-left-color: #3b82f6; }
+.char-entry.grade-초희귀{ border-left-color: #8b5cf6; }
+.char-entry.grade-에픽  { border-left-color: #a855f7; }
+.char-entry.grade-신화  { border-left-color: #ec4899; }
+.char-entry.grade-전설  { border-left-color: #f59e0b; }
+.char-entry.grade-초월  { border-left-color: #ef4444; }
+.char-entry.grade-시크릿{ border-left-color: #06b6d4; background: linear-gradient(90deg, rgba(6,182,212,0.1), transparent); }
+
+.obtained { color: #4ade80; font-weight: bold; }
+.not-obtained { color: #f87171; opacity: 0.7; }
+
+.cutscene-btn {
+  padding: 8px 16px; background: linear-gradient(135deg, #06b6d4, #8b5cf6);
+  border: none; border-radius: 8px; color: white;
+  font-family: 'Jua', sans-serif; font-size: 0.9rem; cursor: pointer;
+  transition: all 0.3s ease; white-space: nowrap;
+}
+.cutscene-btn:hover { transform: scale(1.1); }
+
+/* 컷씬 */
+#cutscene {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,50,0.95); color: white;
+  display: flex; justify-content: center; align-items: center; flex-direction: column;
+  opacity: 0; pointer-events: none; transition: opacity 0.5s ease; z-index: 10000;
+}
+#cutscene.show { opacity: 1; pointer-events: auto; }
+#cutscene-text { font-size: 2.5rem; text-align: center; padding: 20px; }
+#cutscene .btn { margin-top: 30px; }
+
+/* 등급 색상 */
+.grade-일반  { color: #9ca3af; }
+.grade-희귀  { color: #60a5fa; }
+.grade-초희귀{ color: #a78bfa; }
+.grade-에픽  { color: #c084fc; }
+.grade-신화  { color: #f472b6; }
+.grade-전설  { color: #fbbf24; text-shadow: 0 0 30px rgba(251,191,36,0.8); animation: legendaryGlow 1s ease-in-out infinite alternate; }
+.grade-초월  { color: #f87171; text-shadow: 0 0 35px rgba(248,113,113,0.8); animation: transcendentGlow 0.8s ease-in-out infinite alternate; }
+.grade-시크릿{
+  background: linear-gradient(90deg, #06b6d4, #8b5cf6, #ec4899, #06b6d4);
+  background-size: 200% auto;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  animation: secretRainbow 2s linear infinite;
+}
+@keyframes legendaryGlow { from{filter:drop-shadow(0 0 10px rgba(251,191,36,0.5))} to{filter:drop-shadow(0 0 25px rgba(251,191,36,1))} }
+@keyframes transcendentGlow { from{filter:drop-shadow(0 0 15px rgba(248,113,113,0.5));transform:scale(1)} to{filter:drop-shadow(0 0 30px rgba(248,113,113,1));transform:scale(1.02)} }
+@keyframes secretRainbow { to{background-position:200% center} }
+
+.result-img { max-width: 120px; max-height: 120px; border-radius: 12px; }
+
+/* ===== 균 숭배하기 화면 ===== */
+#worship-screen {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: linear-gradient(180deg, #0a0015 0%, #1a0030 50%, #0d0020 100%);
+  color: white; overflow-y: auto; z-index: 9999;
+  font-family: 'Jua', sans-serif;
+}
+.worship-container { max-width: 800px; margin: 0 auto; padding: 20px 20px 60px; }
+
+.worship-header { text-align: center; padding: 60px 0 30px; }
+.worship-crown { font-size: 4rem; animation: float 3s ease-in-out infinite; }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+.worship-title {
+  font-family: 'Black Han Sans', sans-serif; font-size: 3.5rem;
+  background: linear-gradient(135deg, #ffd700, #ff8c00, #ffd700);
+  background-size: 200% auto;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  animation: gradientMove 3s ease infinite;
+}
+.worship-subtitle { color: rgba(255,255,255,0.6); letter-spacing: 2px; margin-top: 8px; }
+.worship-ticker {
+  margin-top: 20px; padding: 10px 0;
+  border-top: 1px solid rgba(255,215,0,0.2);
+  border-bottom: 1px solid rgba(255,215,0,0.2);
+  color: #ffd700; font-size: 0.9rem; white-space: nowrap;
+  overflow: hidden;
+  animation: ticker 20s linear infinite;
+}
+@keyframes ticker { 0%{transform:translateX(100%)} 100%{transform:translateX(-100%)} }
+
+.worship-section {
+  margin: 40px 0;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,215,0,0.15);
+  border-radius: 20px; padding: 30px;
+}
+.worship-section-title { font-size: 1.8rem; color: #ffd700; margin-bottom: 8px; }
+.worship-section-desc { color: rgba(255,255,255,0.5); margin-bottom: 20px; font-size: 0.95rem; }
+
+/* 신전 */
+.worship-temple { text-align: center; }
+.gyun-statue {
+  font-size: 6rem; cursor: pointer; display: inline-block;
+  transition: transform 0.2s, filter 0.2s;
+  filter: drop-shadow(0 0 20px rgba(255,215,0,0.4));
+  user-select: none;
+}
+.gyun-statue:hover { transform: scale(1.1); filter: drop-shadow(0 0 30px gold); }
+.worship-count-text { margin-top: 10px; color: #ffd700; font-size: 1.1rem; }
+.worship-msg { color: rgba(255,255,255,0.8); margin: 10px 0 20px; min-height: 1.5em; font-size: 1.1rem; }
+.donate-group { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.donate-btn {
+  padding: 12px 20px; background: rgba(255,215,0,0.1);
+  border: 1px solid rgba(255,215,0,0.3); border-radius: 12px;
+  color: #ffd700; font-family: 'Jua', sans-serif; font-size: 1rem;
+  cursor: pointer; transition: all 0.2s;
+}
+.donate-btn:hover { background: rgba(255,215,0,0.25); transform: translateY(-2px); }
+
+/* 균력 측정 */
+.gyunforce-box { }
+.measure-btn {
+  padding: 14px 32px; background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  border: none; border-radius: 12px; color: white;
+  font-family: 'Jua', sans-serif; font-size: 1.1rem; cursor: pointer;
+  margin-bottom: 24px; transition: all 0.2s;
+}
+.measure-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(139,92,246,0.4); }
+.gyunforce-bars { display: flex; flex-direction: column; gap: 14px; }
+.gyunforce-row { display: flex; align-items: center; gap: 12px; }
+.gyunforce-row > span:first-child { width: 80px; font-size: 0.9rem; color: rgba(255,255,255,0.7); flex-shrink: 0; }
+.gyunforce-row > span:last-child { width: 36px; font-size: 0.9rem; color: #ffd700; flex-shrink: 0; }
+.gyunforce-track { flex: 1; background: rgba(255,255,255,0.1); border-radius: 99px; height: 12px; overflow: hidden; }
+.gyunforce-bar { height: 100%; border-radius: 99px; transition: width 0.05s linear; }
+.bar1 { background: linear-gradient(90deg, #ffd700, #ff8c00); }
+.bar2 { background: linear-gradient(90deg, #8b5cf6, #6366f1); }
+.bar3 { background: linear-gradient(90deg, #00d4ff, #0099ff); }
+.bar4 { background: linear-gradient(90deg, #4ade80, #22c55e); }
+
+/* 교리 */
+.doctrines { display: flex; flex-direction: column; gap: 12px; }
+.doctrine-card {
+  background: rgba(255,215,0,0.05); border: 1px solid rgba(255,215,0,0.1);
+  border-radius: 14px; padding: 18px 20px;
+}
+.doctrine-num { color: #ffd700; font-size: 0.85rem; margin-bottom: 4px; }
+.doctrine-title { font-size: 1.05rem; margin-bottom: 6px; }
+.doctrine-card p { color: rgba(255,255,255,0.55); font-size: 0.9rem; line-height: 1.6; }
+
+/* 균언 뽑기 */
+.gyunword-box { text-align: center; }
+.gyun-word-result {
+  font-size: 1.4rem; color: #ffd700; min-height: 2em;
+  margin-bottom: 20px; transition: opacity 0.3s;
+  text-shadow: 0 0 20px rgba(255,215,0,0.4);
+}
+
+/* 신도증 */
+.card-wrap { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.gyun-card {
+  background: linear-gradient(135deg, #1a0030, #2d0050);
+  border: 2px solid #ffd700; border-radius: 20px;
+  padding: 30px; width: 100%; max-width: 360px;
+  box-shadow: 0 0 40px rgba(255,215,0,0.2);
+  text-align: center;
+}
+.card-icon { font-size: 3rem; margin-bottom: 10px; }
+.card-name { font-size: 1.6rem; color: #ffd700; }
+.card-rank { color: rgba(255,255,255,0.6); margin: 4px 0 16px; font-size: 0.95rem; }
+.card-rows { display: flex; flex-direction: column; gap: 8px; }
+.card-row {
+  display: flex; justify-content: space-between;
+  padding: 8px 12px; background: rgba(255,255,255,0.05);
+  border-radius: 8px; font-size: 0.95rem;
+}
+.card-row span:last-child { color: #ffd700; }
+.name-input {
+  padding: 12px 20px; background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,215,0,0.3); border-radius: 12px;
+  color: white; font-family: 'Jua', sans-serif; font-size: 1rem;
+  width: 100%; max-width: 360px; text-align: center;
+}
+.name-input::placeholder { color: rgba(255,255,255,0.3); }
+/* ===== 균들과 싸우기 ===== */
+#battle-screen {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 9999; overflow: hidden;
+}
+#battleCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+#npc-dialogue-box {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  width: 90%;
+  max-width: 500px;
+}
+
+.npc-dialogue-container {
+  background: linear-gradient(145deg, rgba(30,30,60,0.95), rgba(20,20,40,0.95));
+  border: 2px solid #ffd700;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(255,215,0,0.3);
+}
+
+.npc-dialogue-header {
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  color: #1a1a2e;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+}
+
+.npc-dialogue-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.npc-close-btn {
+  background: rgba(0,0,0,0.2);
+  border: none;
+  color: #1a1a2e;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0 8px;
+  border-radius: 4px;
+}
+
+.npc-close-btn:hover {
+  background: rgba(0,0,0,0.4);
+}
+
+.npc-dialogue-body {
+  padding: 16px;
+  color: #fff;
+  min-height: 100px;
+  display: flex;
+  align-items: flex-start;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.npc-dialogue-body p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+.npc-dialogue-footer {
+  padding: 12px 16px;
+  background: rgba(0,0,0,0.3);
+  text-align: right;
+  border-top: 1px solid rgba(255,215,0,0.2);
+}
+
+.npc-next-btn {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  border: none;
+  border-radius: 8px;
+  color: #1a1a2e;
+  font-family: 'Jua', sans-serif;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.npc-next-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255,215,0,0.4);
+}
+
+.npc-job-buttons {
+  padding: 12px 16px;
+  background: rgba(0,0,0,0.3);
+  border-top: 1px solid rgba(255,215,0,0.2);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex-direction: column;
+}
+
+.npc-job-btn {
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-family: 'Jua', sans-serif;
+  font-size: 0.95rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+  min-width: 120px;
+}
+
+.npc-job-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139,92,246,0.4);
+}
+
+.npc-job-btn.cancel {
+  background: linear-gradient(135deg, #666, #444);
+}
+
+.npc-job-btn.cancel:hover {
+  box-shadow: 0 4px 12px rgba(100,100,100,0.4);
+}
+/* ===== 상점 UI ===== */
+#shop-dialogue-box {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  width: 90%;
+  max-width: 560px;
+}
+
+.shop-item-btn {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(255,215,0,0.07);
+  border: 1px solid rgba(255,215,0,0.2);
+  border-radius: 12px;
+  color: #fff;
+  font-family: 'Jua', sans-serif;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.shop-item-btn:hover:not(:disabled) {
+  background: rgba(255,215,0,0.18);
+  border-color: rgba(255,215,0,0.5);
+  transform: translateX(4px);
+}
+.shop-item-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
