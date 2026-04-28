@@ -78,8 +78,8 @@ class GameMap {
   
     this.npcs = [
        { id: 'npc-dark-1', label: 'ERROR', x: 400, y: 750, w: 60, h: 60, color: '#9333ea', lc: '#5b21b6' },
-       { id: 'npc-dark-2', label: 'Glitch', x: 1900, y: 300, w: 60, h: 60, color: '#6b21a8', lc: '#3f0f5c' },
-       { id: 'npc-dark-3', label: 'dark', x: 1900, y: 1200, w: 60, h: 60, color: '#7c3aed', lc: '#5b21b6' },
+       { id: 'npc-dark-2', label: '마검사', x: 1900, y: 300, w: 60, h: 60, color: '#6b21a8', lc: '#3f0f5c' },
+       { id: 'npc-dark-3', label: '균 숭배자', x: 1900, y: 1200, w: 60, h: 60, color: '#7c3aed', lc: '#5b21b6' },
     ];
 
     this.trees = this._genTrees();

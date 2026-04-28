@@ -285,12 +285,14 @@ class AltarMutationDepth extends GameMap {
       ctx.restore();
     }
 
-    if (this.showUI) this._drawUI(ctx, vw, vh);
     this._drawFloatingTexts(ctx);
 
     ctx.strokeStyle = '#00120b';
     ctx.lineWidth = 8;
     ctx.strokeRect(-camX, -camY, this.width, this.height);
+
+    // UI를 맨 마지막에 그리기
+    if (this.showUI) this._drawUI(ctx, vw, vh);
   }
 
   _drawUI(ctx, vw, vh) {
@@ -622,4 +624,3 @@ function getMutationStageClearHealBonus() {
   for (const m of _getActiveMutationDefs()) sum += (m.stageHeal || 0);
   return sum;
 }
-

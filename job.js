@@ -20,6 +20,9 @@ function saveJobData() {
 }
 
 function canChangeJob(jobName, playerLevel) {
+  if (playerJob.current === '超越體') {
+    return false;
+  }
   // 이미 최강 직업이면 전직 불가
   if (playerJob.current === '광신도' || playerJob.current === '혈검사' || playerJob.current === '금서술사') {
     return false;
@@ -51,6 +54,20 @@ function changeJob(newJob) {
   return true;
 }
 
+function hasTranscendentApproval() {
+  return playerJob.current === '超越體' || localStorage.getItem('gyun_transcendent_approved') === '1';
+}
+
+function unlockTranscendentBody() {
+  if (playerJob.current === '超越體') return false;
+  playerJob.current = '超越體';
+  playerJob.level = Math.max(playerJob.level || 0, 100);
+  playerJob.jobChangeCount++;
+  localStorage.setItem('gyun_transcendent_approved', '1');
+  saveJobData();
+  return true;
+}
+
 function getJobInfo() {
   const jobInfos = {
     'none': { name: '직업 없음', description: '아직 직업이 없습니다.', color: '#9ca3af' },
@@ -66,6 +83,9 @@ function getJobInfo() {
 }
 
 function getJobChangeMessage(jobName, playerLevel) {
+  if (playerJob.current === '超越體') {
+    return `????? ??? ??? ??? '${playerJob.current}'????? ??????!`;
+  }
   if (playerJob.current === '광신도' || playerJob.current === '혈검사' || playerJob.current === '금서술사') {
     return `당신은 이미 최강 직업 '${playerJob.current}'을 갖고 있습니다!`;
   }

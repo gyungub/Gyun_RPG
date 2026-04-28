@@ -28,6 +28,25 @@ class AltarTruthDepth extends GameMap {
         x: 960, y: 90, w: 280, h: 90,
         color: '#334155', lc: '#1e293b',
       },
+      {
+        id: 'truth-record',
+        label: '기록 회랑',
+        x: 430, y: 760, w: 220, h: 120,
+        color: '#1e1b4b', lc: '#4338ca',
+      },
+      {
+        id: 'truth-memory-enter',
+        label: '🜂 반향 열람실',
+        x: 820, y: 1320, w: 360, h: 90,
+        color: '#312e81',
+        lc: '#4338ca',
+      },
+      {
+        id: 'truth-core',
+        label: '진실 봉인소',
+        x: 1530, y: 760, w: 220, h: 120,
+        color: '#3b0764', lc: '#7e22ce',
+      },
     ];
 
     this.npcs = [
@@ -70,6 +89,69 @@ class AltarTruthDepth extends GameMap {
       const t = this.lines[i];
       t.life--;
       if (t.life <= 0) this.lines.splice(i, 1);
+    }
+  }
+
+  interact(player) {
+    const playerW = player.w || 40;
+    const playerH = player.h || 40;
+
+    // NPC 상호작용 먼저 체크
+    for (const npc of this.npcs) {
+      if (
+        player.x + playerW > npc.x - 50 && 
+        player.x < npc.x + npc.w + 50 &&
+        player.y + playerH > npc.y - 50 && 
+        player.y < npc.y + npc.h + 50
+      ) {
+        if (window.showDialogue) {
+          showDialogue('서기관', '읽는 것은 문장이 아니다.\n읽히는 것은 너다.');
+        }
+        return;
+      }
+    }
+
+    // 존 상호작용
+    for (const z of this.zones) {
+      if (
+        player.x + playerW > z.x - 40 && 
+        player.x < z.x + z.w + 40 &&
+        player.y + playerH > z.y - 40 && 
+        player.y < z.y + z.h + 40
+      ) {
+        this._triggerZone(z.id);
+        return;
+      }
+    }
+  }
+
+  _triggerZone(id) {
+    if (id === 'altar-depth-return') {
+      if (window.changeMap) {
+        changeMap('centralaltar');
+      }
+      return;
+    }
+
+    if (id === 'truth-record') {
+      if (window.changeMap) {
+        changeMap('truth-record');
+      }
+      return;
+    }
+
+    if (id === 'truth-memory-enter') {
+      if (window.changeMap) {
+        changeMap('truth-memory');
+      }
+      return;
+    }
+
+    if (id === 'truth-core') {
+      if (window.changeMap) {
+        changeMap('truth-sealed');
+      }
+      return;
     }
   }
 
@@ -177,4 +259,3 @@ class AltarTruthDepth extends GameMap {
     ctx.strokeRect(-camX, -camY, this.width, this.height);
   }
 }
-

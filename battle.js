@@ -33,6 +33,8 @@ let battleState = {
   gameOver: false,
   stageClear: false,
   allClear: false,
+  subjugationTimer: 0,
+  subjugationTriggered: false,
 };
 
 function resetBattle() {
@@ -228,6 +230,59 @@ function retryBattle() {
   resetBattle();
 }
 
+function triggerSubjugation() {
+  if (!inBattle || battleState.gameOver || battleState.allClear) return;
+  if (battleState.subjugationTimer > 0 || battleState.subjugationTriggered) return;
+
+  battleState.active = false;
+  battleState.subjugationTriggered = true;
+  battleState.subjugationTimer = 75;
+
+  for (const enemy of battleState.enemies) {
+    enemy.subjugated = true;
+    enemy.attackTimer = 9999;
+    battleState.damageTexts.push({
+      x: enemy.x,
+      y: enemy.y - enemy.size,
+      text: '??',
+      color: '#facc15',
+      life: 80,
+      vy: -1.4,
+    });
+  }
+
+  battleState.damageTexts.push({
+    x: battleState.playerX + 30,
+    y: battleState.playerY - 46,
+    text: '?? ??',
+    color: '#fef08a',
+    life: 110,
+    vy: -1.2,
+  });
+
+  if (typeof showItemToast === 'function') {
+    showItemToast('??', '? ??? ?? ???. ??? ?? ?? ???? ????.', '#facc15');
+  }
+}
+
+function resolveSubjugationAdvance() {
+  if (battleState.stage >= 10) {
+    battleState.allClear = true;
+    battleState.active = false;
+    updateBattleHUD();
+    return;
+  }
+
+  battleState.stage++;
+  const bonus = (typeof getMutationStageClearHealBonus === 'function') ? getMutationStageClearHealBonus() : 0;
+  battleState.playerHp = Math.min(battleState.playerHp + 30 + bonus, battleState.playerMaxHp);
+  battleState.active = true;
+  battleState.subjugationTriggered = false;
+  battleState.stageClear = false;
+  spawnWave();
+  updateBattleHUD();
+}
+
 function updateBattleHUD() {
   document.getElementById('b-stage').textContent = battleState.stage;
   document.getElementById('b-level').textContent = battleState.playerLevel;
@@ -267,6 +322,7 @@ function battleLoop() {
     for (const e of battleState.enemies) {
       e.wobble += 0.05;
 
+      if (e.subjugated) continue;
       if (frozen) continue;
 
       // 혼란 상태면 랜덤 이동

@@ -17,6 +17,8 @@ window.CentralAltar = window.CentralAltar || class CentralAltar extends GameMap 
     this.whispers = [];
     this.whisperTimer = 0;
     this.uiGlitch = 0;
+    this.belowRejectTimer = 0;
+    this.belowRejectLevel = 0;
 
     this._initCentralAltar();
   }
@@ -54,6 +56,12 @@ window.CentralAltar = window.CentralAltar || class CentralAltar extends GameMap 
         label: '🕳️ 심연 진입',
         x: 860, y: 1240, w: 280, h: 150,
         color: '#111827', lc: '#4c1d95',
+      },
+      {
+        id: 'altar-route-below',
+        label: '? ???',
+        x: 850, y: 1460, w: 300, h: 140,
+        color: '#020617', lc: '#7c3aed',
       },
       {
         id: 'altar-route-truth',
@@ -100,6 +108,13 @@ window.CentralAltar = window.CentralAltar || class CentralAltar extends GameMap 
 
   openUI() { this.showUI = true; }
   closeUI() { this.showUI = false; }
+
+  rejectBelow(playerRef, level) {
+    this.belowRejectTimer = 90;
+    this.belowRejectLevel = level;
+    if (playerRef) playerRef.y = Math.max(220, playerRef.y - 120);
+    this._addFloatingText('?? ?? ????. ? ???? ????.', '#fca5a5');
+  }
 
   _addFloatingText(text, color = '#e5e7eb') {
     this.floatingTexts.push({
@@ -396,7 +411,7 @@ window.CentralAltar = window.CentralAltar || class CentralAltar extends GameMap 
       ctx.strokeStyle = z.lc;
       ctx.lineWidth = 2;
       ctx.strokeRect(sx, sy, z.w, z.h);
-      ctx.fillStyle = z.id === 'altar-route-abyss' ? '#e5e7eb' : '#94a3b8';
+      ctx.fillStyle = z.id === 'altar-route-abyss' ? '#e5e7eb' : (z.id === 'altar-route-below' ? '#f5d0fe' : '#94a3b8');
       ctx.font = "bold 12px 'Noto Sans KR', sans-serif";
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -435,9 +450,6 @@ window.CentralAltar = window.CentralAltar || class CentralAltar extends GameMap 
       ctx.restore();
     }
 
-    // UI 패널
-    if (this.showUI) this._drawUI(ctx, vw, vh);
-
     // 떠다니는 텍스트
     this._drawFloatingTexts(ctx);
 
@@ -462,6 +474,9 @@ window.CentralAltar = window.CentralAltar || class CentralAltar extends GameMap 
     ctx.strokeStyle = '#1a0a2e';
     ctx.lineWidth = 6;
     ctx.strokeRect(-camX, -camY, this.width, this.height);
+
+    // UI 패널을 맨 마지막에 그리기
+    if (this.showUI) this._drawUI(ctx, vw, vh);
   }
 
   _drawUI(ctx, vw, vh) {

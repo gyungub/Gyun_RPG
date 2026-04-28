@@ -330,6 +330,13 @@ class UpgradeRoom extends GameMap {
       ctx.fillText(npc.label, sx + npc.w/2, sy + npc.h + 18);
     }
 
+    this._drawResourceHUD(ctx, vw);
+    this._drawFloatingTexts(ctx);
+
+    ctx.strokeStyle = '#1a0a2e'; ctx.lineWidth = 6;
+    ctx.strokeRect(-camX, -camY, this.width, this.height);
+
+    // UI를 맨 마지막에 그리기
     if (this.showUI) {
       this._drawUpgradeUI(ctx, vw, vh);
     } else {
@@ -341,12 +348,6 @@ class UpgradeRoom extends GameMap {
       ctx.fillText('[ E키 — 제실 관리자에게 대가를 지불하라 ]', vw/2, vh - 60);
       ctx.restore();
     }
-
-    this._drawResourceHUD(ctx, vw);
-    this._drawFloatingTexts(ctx);
-
-    ctx.strokeStyle = '#1a0a2e'; ctx.lineWidth = 6;
-    ctx.strokeRect(-camX, -camY, this.width, this.height);
   }
 
   _drawRitualCircles(ctx, camX, camY) {

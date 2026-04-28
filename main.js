@@ -1,4 +1,4 @@
-// ========== 기본 설정 ==========
+﻿// ========== 기본 설정 ==========
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 let VW = window.innerWidth, VH = window.innerHeight;
@@ -153,6 +153,10 @@ function changeMap(mapId) {
   else if (mapId === 'altar-mutation') map = new AltarMutationDepth();
   else if (mapId === 'altar-abyss')  map = new AltarAbyssDepth();
   else if (mapId === 'altar-truth')  map = new AltarTruthDepth();
+  else if (mapId === 'altar-below')  map = new AltarBelowDepth();
+  else if (mapId === 'truth-record') map = new TruthRecordHall();
+  else if (mapId === 'truth-memory') map = new TruthMemoryRoom();
+  else if (mapId === 'truth-sealed') map = new TruthSealedRoom();
   else if (mapId === 'library')      map = new ForbiddenLibrary();
   else if (mapId === 'readingroom')  { map = new ReadingRoom(); saveReadingRoomRef(); }
   else if (mapId === 'sealedroom')   map = new SealedRoom();
@@ -160,8 +164,37 @@ function changeMap(mapId) {
   else if (mapId === 'skillroom')    map = new SkillRoom();
   else if (mapId === 'secret')       map = new GameMap('secret');
   else                               map = new GameMap(mapId);
-  player.x = 1180;
-  player.y = 700;
+  
+  // 맵별 플레이어 스폰 위치
+  if (mapId === 'cult') {
+    player.x = 1180; player.y = 1200;
+  } else if (mapId === 'centralaltar') {
+    player.x = 1180; player.y = 1000;
+  } else if (mapId === 'altar-faith' || mapId === 'altar-mutation' || mapId === 'altar-abyss') {
+    player.x = 1100; player.y = 900;
+  } else if (mapId === 'altar-truth') {
+    player.x = 1100; player.y = 1300;
+  } else if (mapId === 'altar-below') {
+    player.x = 1100; player.y = 160;
+  } else if (mapId === 'truth-record') {
+    player.x = 250; player.y = 650;
+  } else if (mapId === 'truth-memory') {
+    player.x = 1000; player.y = 400;
+  } else if (mapId === 'truth-sealed') {
+    player.x = 1000; player.y = 800;
+  } else if (mapId === 'library') {
+    player.x = 1200; player.y = 1200;
+  } else if (mapId === 'readingroom') {
+    player.x = 1200; player.y = 1000;
+  } else if (mapId === 'sealedroom') {
+    player.x = 1200; player.y = 1000;
+  } else if (mapId === 'upgraderoom') {
+    player.x = 1200; player.y = 1000;
+  } else if (mapId === 'skillroom') {
+    player.x = 1200; player.y = 1000;
+  } else {
+    player.x = 1180; player.y = 900;
+  }
 }
 
 // ========== 미니맵 ==========
@@ -186,8 +219,6 @@ function drawMinimap() {
 
 // ========== 게임 루프 ==========
 function loop() {
-  if (inGacha || inWorship || inBattle) { requestAnimationFrame(loop); return; }
-
   // 열람실 기절 중 이동 불가
   if (!(map instanceof ReadingRoom && map.isStunned())) {
     player.update(map);
@@ -217,7 +248,7 @@ function loop() {
   ctx.restore();
 
   // 존 안내
-  if (curZone) {
+  if (curZone && !inGacha && !inWorship && !inBattle) {
     const txt = curZone.label + '  —  F 키로 입장';
     const pw=340, ph=44, px=(VW-pw)/2, py=VH-80;
     ctx.save();
@@ -239,6 +270,13 @@ function loop() {
 window.addEventListener('keydown', (e) => {
   // ===== E키 — NPC 대화 =====
   if (e.key.toLowerCase() === 'e' && !inGacha && !inWorship && !inBattle) {
+    // 맵의 interact 메서드가 있으면 호출 (NPC 또는 존 상호작용)
+    if (map.interact && typeof map.interact === 'function') {
+      map.interact(player);
+      return;
+    }
+    
+    // 기본 NPC 대화 처리
     if (map.npcs) {
       for (const npc of map.npcs) {
         if (npc.hidden) continue;
@@ -280,39 +318,62 @@ window.addEventListener('keydown', (e) => {
     }
   }
 
-  // ===== F키 — 존 입장 =====
-  if (e.key.toLowerCase() === 'f' && curZone && !inGacha && !inWorship && !inBattle) {
-    if (map instanceof UpgradeRoom && map.showUI) return;
-    if (map instanceof SkillRoom   && map.showUI) return;
-    if (map instanceof CentralAltar && map.showUI) return;
+// ===== F키 — 존 입장 =====
+if (e.key.toLowerCase() === 'f' && curZone && !inGacha && !inWorship && !inBattle) {
+  if (map instanceof UpgradeRoom && map.showUI) return;
+  if (map instanceof SkillRoom   && map.showUI) return;
+  if (map instanceof CentralAltar && map.showUI) return;
 
-    if      (curZone.id === 'gacha' || curZone.id === 'secret-gacha') {
-      document.getElementById('gacha-screen').style.display='block'; inGacha=true;
-    }
-    else if (curZone.id === 'worship')            openWorship();
-    else if (curZone.id === 'secret-worship')     changeMap('cult');
-    else if (curZone.id === 'battle' || curZone.id === 'secret-battle') openBattle();
-    else if (curZone.id === 'secret')             changeMap('secret');
-    else if (curZone.id === 'return')             changeMap('main');
-    else if (curZone.id === 'forbidden-library')  changeMap('library');
-    else if (curZone.id === 'lib-return')         changeMap('cult');
-    else if (curZone.id === 'lib-reading-room')   changeMap('readingroom');
-    else if (curZone.id === 'reading-return')     changeMap('library');
-    else if (curZone.id === 'lib-sealed-zone')    changeMap('sealedroom');
-    else if (curZone.id === 'sealed-return')      changeMap('library');
-    else if (curZone.id === 'upgrade-room')       changeMap('upgraderoom');
-    else if (curZone.id === 'upgrade-return')     changeMap('cult');
-    else if (curZone.id === 'skill-room')         changeMap('skillroom');
-    else if (curZone.id === 'skill-return')       changeMap('cult');
-    else if (curZone.id === 'main-altar')         changeMap('centralaltar');
-    else if (curZone.id === 'altar-return')       changeMap('cult');
-    else if (curZone.id === 'altar-route-faith')  changeMap('altar-faith');
-    else if (curZone.id === 'altar-route-mutation') changeMap('altar-mutation');
-    else if (curZone.id === 'altar-route-abyss')  changeMap('altar-abyss');
-    else if (curZone.id === 'altar-route-truth')  changeMap('altar-truth');
-    else if (curZone.id === 'altar-depth-return') changeMap('centralaltar');
-    else alert(curZone.label + ' 기능은 아직 준비 중입니다!');
+  // 기본 존 이동 처리
+  if      (curZone.id === 'gacha' || curZone.id === 'secret-gacha') {
+    document.getElementById('gacha-screen').style.display='block'; inGacha=true;
   }
+  else if (curZone.id === 'worship')            openWorship();
+  else if (curZone.id === 'secret-worship')     changeMap('cult');
+  else if (curZone.id === 'battle' || curZone.id === 'secret-battle') openBattle();
+  else if (curZone.id === 'secret')             changeMap('secret');
+  else if (curZone.id === 'return')             changeMap('main');
+  else if (curZone.id === 'forbidden-library')  changeMap('library');
+  else if (curZone.id === 'lib-return')         changeMap('cult');
+  else if (curZone.id === 'lib-reading-room')   changeMap('readingroom');
+  else if (curZone.id === 'reading-return')     changeMap('library');
+  else if (curZone.id === 'lib-sealed-zone')    changeMap('sealedroom');
+  else if (curZone.id === 'sealed-return')      changeMap('library');
+  else if (curZone.id === 'upgrade-room')       changeMap('upgraderoom');
+  else if (curZone.id === 'upgrade-return')     changeMap('cult');
+  else if (curZone.id === 'skill-room')         changeMap('skillroom');
+  else if (curZone.id === 'skill-return')       changeMap('cult');
+  else if (curZone.id === 'main-altar')         changeMap('centralaltar');
+  else if (curZone.id === 'altar-return')       changeMap('cult');
+  else if (curZone.id === 'altar-route-faith')  changeMap('altar-faith');
+  else if (curZone.id === 'altar-route-mutation') changeMap('altar-mutation');
+  else if (curZone.id === 'altar-route-abyss')  changeMap('altar-abyss');
+  else if (curZone.id === 'altar-route-truth')  changeMap('altar-truth');
+  else if (curZone.id === 'altar-route-below') {
+    const level = (typeof battleState !== 'undefined') ? (battleState.playerLevel || 1) : 1;
+    if (level >= 100) changeMap('altar-below');
+    else if (map instanceof CentralAltar && typeof map.rejectBelow === 'function') {
+      map.rejectBelow(player, level);
+    }
+  }
+  else if (curZone.id === 'altar-depth-return') changeMap('centralaltar');
+  else if (curZone.id === 'truth-record')       changeMap('truth-record');
+  else if (curZone.id === 'truth-memory-enter') changeMap('truth-memory');
+  else if (curZone.id === 'truth-memory-return') changeMap('altar-truth');
+  else if (curZone.id === 'truth-record-return') changeMap('altar-truth');
+  else if (curZone.id === 'truth-core')         changeMap('truth-sealed');
+  else if (curZone.id === 'truth-sealed-return') changeMap('altar-truth');
+  else if (curZone.id === 'below-return')       changeMap('centralaltar');
+
+  // 존 이동이 아닌 특수 상호작용만 마지막
+  else if (map.interact && typeof map.interact === 'function') {
+    map.interact(player);
+  }
+
+  else {
+    alert(curZone.label + ' 기능은 아직 준비 중입니다!');
+  }
+}
 
   // ===== ESC =====
   if (e.key === 'Escape') {

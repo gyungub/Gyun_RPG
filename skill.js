@@ -1,4 +1,4 @@
-let skillState = {
+﻿let skillState = {
   lastFireballTime: 0,
   lastInstakillTime: 0,
   lastLightningTime: 0,
@@ -27,6 +27,14 @@ function hasJobUnlocked(jobName) {
 
 function canUseSkill() {
   return playerJob.current !== 'none' && playerJob.current !== undefined;
+}
+
+JOB_LEVEL_REQUIREMENT['超越體'] = 100;
+
+function castSubjugation() {
+  if (playerJob.current !== '超越體') return;
+  if (typeof triggerSubjugation !== 'function') return;
+  triggerSubjugation();
 }
 
 // ========== 마법사 - 파이어볼 ==========
