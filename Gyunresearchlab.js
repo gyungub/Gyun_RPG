@@ -14,78 +14,26 @@ class GyunResearchLab extends GameMap {
     this.researcherX = 1200;
     this.researcherY = 900;
     this.researcherShake = 0;
+    this.codexScroll = 0;
     
     // 실제 뽑기에서 획득한 균들을 저장
     this.playerCollection = JSON.parse(localStorage.getItem('gyun_lab_collection') || '{}');
     
-    this.gyunDatabase = {
-      'green-gyun': { 
-        name: '초록 균',
-        rarity: 'common',
-        icon: '💚',
-        danger: '낮음',
-        behavior: '온순함',
-        desc: '가장 흔한 균. 무해하지만 계속 증식한다.',
-        observe: '초록색 균사체가 방사상으로 뻗어나감.',
-        memo: '모든 균의 조상이라는 설이 있다.',
-        secret: null
-      },
-      'red-gyun': { 
-        name: '빨강 균',
-        rarity: 'common',
-        icon: '❤️',
-        danger: '낮음',
-        behavior: '반응함',
-        desc: '붉은색 포자체. 독성은 약함.',
-        observe: '포자 입자가 공기 중에서 빛남.',
-        memo: '섭취 시 미각이 일시적으로 바뀐다.',
-        secret: null
-      },
-      'purple-gyun': { 
-        name: '보라 균',
-        rarity: 'rare',
-        icon: '💜',
-        danger: '중간',
-        behavior: '추적함',
-        desc: '희귀한 보라색 균.',
-        observe: '자체 발광 능력을 보유.',
-        memo: '꿈을 꾸게 한다는 증언이 있다.',
-        secret: '[LOG 손상됨] 표본이 관찰자를 따라다님'
-      },
-      'black-gyun': { 
-        name: '검은 균',
-        rarity: 'rare',
-        icon: '🖤',
-        danger: '극도',
-        behavior: '흡수함',
-        desc: '매우 위험한 균.',
-        observe: '주변 빛을 완전히 흡수함.',
-        memo: '접근자들의 정신 이상 진단.',
-        secret: '[기밀] 실험체 5명 모두 퇴원 불가'
-      },
-      'gold-gyun': { 
-        name: '황금 균',
-        rarity: 'rare',
-        icon: '💰',
+    this.gyunDatabase = {};
+
+    for (const [id, count] of Object.entries(this.playerCollection)) {
+      this.gyunDatabase[id] = {
+        name: id,
+        rarity: 'unknown',
+        icon: '🧪',
         danger: '불명',
-        behavior: '관찰함',
-        desc: '전설의 균.',
-        observe: '황금으로 만들어진 외형.',
-        memo: '소원이 이루어진다는 설.',
-        secret: '[기밀] 모든 사건의 중심'
-      },
-      'void-gyun': { 
-        name: '공허 균',
-        rarity: 'hidden',
-        icon: '⚫',
-        danger: '미측정',
-        behavior: '당신을 본다',
-        desc: '존재하지만 인식할 수 없는 균.',
-        observe: '관찰 시 관찰자의 정신에 영향.',
-        memo: '이 기록을 읽은 당신은...',
-        secret: '[시스템 메시지] 당신은 이미 감염되었습니다.'
-      }
-    };
+        behavior: '관찰 중',
+        desc: `${id}에 대한 기본 데이터.`,
+        observe: `${id}는 지속적으로 증식 중이다.`,
+        memo: `연구원들이 ${id}를 두려워하기 시작했다.`,
+        secret: `${id}는 이미 연구소를 장악했다.`
+      };
+    }
     
     this.researchLog = [
       '2026-01-15: 표본 수집 완료',
@@ -281,12 +229,19 @@ class GyunResearchLab extends GameMap {
   }
   
   drawCodex(ctx, vw, vh) {
+
+    ctx.save();
+
+    ctx.beginPath();
+    ctx.rect(20, 150, vw - 40, vh - 190);
+    ctx.clip();
+
     ctx.fillStyle = '#64c8ff';
     ctx.font = 'bold 14px "Jua"';
     ctx.textAlign = 'left';
     ctx.fillText('수집된 표본', 40, 180);
     
-    let itemY = 210;
+    let itemY = 210 - map.codexScroll;
     const itemsPerRow = 6;
     let itemX = 40;
     let itemsInRow = 0;
@@ -296,6 +251,12 @@ class GyunResearchLab extends GameMap {
         itemX = 40;
         itemY += 100;
         itemsInRow = 0;
+      }
+
+      if (itemY + 80 < 160 || itemY > vh - 40) {
+        itemX += 100;
+        itemsInRow++;
+        continue;
       }
       
       const count = this.playerCollection[gyunId] || 0;
@@ -333,6 +294,8 @@ class GyunResearchLab extends GameMap {
     ctx.font = '11px "Jua"';
     ctx.textAlign = 'center';
     ctx.fillText('E키 또는 클릭으로 선택', vw / 2, vh - 40);
+
+    ctx.restore();
   }
   
   drawAnalysis(ctx, vw, vh) {
@@ -556,3 +519,23 @@ document.addEventListener('click', (e) => {
     changeMap('altar-truth');
   }
 });
+
+document.addEventListener('wheel', (e) => {
+  if (currentMapId !== 'gyun-research-lab' || !map) return;
+  if (map.currentTab !== 'codex') return;
+
+  e.preventDefault();
+
+  map.codexScroll += e.deltaY * 0.5;
+
+  if (map.codexScroll < 0) {
+    map.codexScroll = 0;
+  }
+
+  const totalRows = Math.ceil(Object.keys(map.gyunDatabase).length / 6);
+  const maxScroll = Math.max(0, totalRows * 100 - 500);
+
+  if (map.codexScroll > maxScroll) {
+    map.codexScroll = maxScroll;
+  }
+}, { passive: false });
