@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════
-// 균균월드 - 모바일 터치 컨트롤 시스템
-// Mobile Touch Control System
+// 균균월드 - 모바일 터치 컨트롤 시스템 (개선판)
+// Mobile Touch Control System - FIXED VERSION
 // ═══════════════════════════════════════════════════════════
 
 const MobileControl = {
@@ -21,10 +21,6 @@ const MobileControl = {
   },
 
   buttons: {
-    move_up: null,
-    move_down: null,
-    move_left: null,
-    move_right: null,
     interact: null,
     talk: null,
     attack: null,
@@ -34,6 +30,7 @@ const MobileControl = {
   },
 
   buttonStates: {},
+  pressedKeys: new Set(),
 
   init() {
     this.isTouch = () => {
@@ -56,6 +53,7 @@ const MobileControl = {
   },
 
   createUI() {
+    // 조이스틱
     this.joystick.container = document.createElement('div');
     this.joystick.container.id = 'mobile-joystick-area';
     this.joystick.container.innerHTML = `
@@ -68,27 +66,47 @@ const MobileControl = {
     this.joystick.stick = this.joystick.container.querySelector('.joystick-stick');
     document.body.appendChild(this.joystick.container);
 
+    // 버튼들
     const buttonsContainer = document.createElement('div');
     buttonsContainer.id = 'mobile-buttons-area';
     buttonsContainer.innerHTML = `
       <div class="mobile-buttons-grid">
         <div class="battle-buttons left-column">
-          <button class="action-btn attack-btn" id="btn-attack"><span class="btn-label">🗡️</span><span class="btn-text">공격</span></button>
-          <button class="action-btn skill-btn q-btn" id="btn-skill-q"><span class="btn-label">💚</span><span class="btn-text">균즙</span></button>
+          <button class="action-btn attack-btn" id="btn-attack" data-key="attack">
+            <span class="btn-label">🗡️</span>
+            <span class="btn-text">공격</span>
+          </button>
+          <button class="action-btn skill-btn q-btn" id="btn-skill-q" data-key="skill_q">
+            <span class="btn-label">💚</span>
+            <span class="btn-text">균즙</span>
+          </button>
         </div>
         <div class="move-buttons right-column">
-          <button class="action-btn interact-btn" id="btn-interact"><span class="btn-label">🚪</span><span class="btn-text">입장</span></button>
-          <button class="action-btn talk-btn" id="btn-talk"><span class="btn-label">💬</span><span class="btn-text">대화</span></button>
+          <button class="action-btn interact-btn" id="btn-interact" data-key="interact">
+            <span class="btn-label">🚪</span>
+            <span class="btn-text">입장</span>
+          </button>
+          <button class="action-btn talk-btn" id="btn-talk" data-key="talk">
+            <span class="btn-label">💬</span>
+            <span class="btn-text">대화</span>
+          </button>
         </div>
         <div class="skill-buttons top-right">
-          <button class="action-btn skill-r-btn compact" id="btn-skill-r"><span class="btn-label">🔥</span><span class="btn-text">광폭</span></button>
-          <button class="action-btn skill-g-btn compact" id="btn-skill-g"><span class="btn-label">👑</span><span class="btn-text">복종</span></button>
+          <button class="action-btn skill-r-btn compact" id="btn-skill-r" data-key="skill_r">
+            <span class="btn-label">🔥</span>
+            <span class="btn-text">광폭</span>
+          </button>
+          <button class="action-btn skill-g-btn compact" id="btn-skill-g" data-key="skill_g">
+            <span class="btn-label">👑</span>
+            <span class="btn-text">복종</span>
+          </button>
         </div>
       </div>
     `;
 
     document.body.appendChild(buttonsContainer);
 
+    // 버튼 요소 저장
     this.buttons.attack = document.getElementById('btn-attack');
     this.buttons.skill_q = document.getElementById('btn-skill-q');
     this.buttons.skill_r = document.getElementById('btn-skill-r');
@@ -96,6 +114,7 @@ const MobileControl = {
     this.buttons.interact = document.getElementById('btn-interact');
     this.buttons.talk = document.getElementById('btn-talk');
 
+    // 버튼 상태 초기화
     Object.keys(this.buttons).forEach(key => {
       this.buttonStates[key] = false;
     });
@@ -340,6 +359,7 @@ const MobileControl = {
   },
 
   setupEventListeners() {
+    // 조이스틱
     this.joystick.bg.addEventListener('touchstart', (e) => this.handleJoystickStart(e));
     this.joystick.bg.addEventListener('touchmove', (e) => this.handleJoystickMove(e));
     this.joystick.bg.addEventListener('touchend', (e) => this.handleJoystickEnd(e));
@@ -349,35 +369,22 @@ const MobileControl = {
     document.addEventListener('mousemove', (e) => this.handleJoystickMove(e));
     document.addEventListener('mouseup', (e) => this.handleJoystickEnd(e));
 
-    this.buttons.attack?.addEventListener('touchstart', () => this.pressButton('attack'));
-    this.buttons.attack?.addEventListener('touchend', () => this.releaseButton('attack'));
-    this.buttons.attack?.addEventListener('mousedown', () => this.pressButton('attack'));
-    this.buttons.attack?.addEventListener('mouseup', () => this.releaseButton('attack'));
+    // 모든 버튼 이벤트
+    Object.keys(this.buttons).forEach(buttonKey => {
+      const btn = this.buttons[buttonKey];
+      if (!btn) return;
 
-    this.buttons.skill_q?.addEventListener('touchstart', () => this.pressButton('skill_q'));
-    this.buttons.skill_q?.addEventListener('touchend', () => this.releaseButton('skill_q'));
-    this.buttons.skill_q?.addEventListener('mousedown', () => this.pressButton('skill_q'));
-    this.buttons.skill_q?.addEventListener('mouseup', () => this.releaseButton('skill_q'));
-
-    this.buttons.skill_r?.addEventListener('touchstart', () => this.pressButton('skill_r'));
-    this.buttons.skill_r?.addEventListener('touchend', () => this.releaseButton('skill_r'));
-    this.buttons.skill_r?.addEventListener('mousedown', () => this.pressButton('skill_r'));
-    this.buttons.skill_r?.addEventListener('mouseup', () => this.releaseButton('skill_r'));
-
-    this.buttons.skill_g?.addEventListener('touchstart', () => this.pressButton('skill_g'));
-    this.buttons.skill_g?.addEventListener('touchend', () => this.releaseButton('skill_g'));
-    this.buttons.skill_g?.addEventListener('mousedown', () => this.pressButton('skill_g'));
-    this.buttons.skill_g?.addEventListener('mouseup', () => this.releaseButton('skill_g'));
-
-    this.buttons.interact?.addEventListener('touchstart', () => this.pressButton('interact'));
-    this.buttons.interact?.addEventListener('touchend', () => this.releaseButton('interact'));
-    this.buttons.interact?.addEventListener('mousedown', () => this.pressButton('interact'));
-    this.buttons.interact?.addEventListener('mouseup', () => this.releaseButton('interact'));
-
-    this.buttons.talk?.addEventListener('touchstart', () => this.pressButton('talk'));
-    this.buttons.talk?.addEventListener('touchend', () => this.releaseButton('talk'));
-    this.buttons.talk?.addEventListener('mousedown', () => this.pressButton('talk'));
-    this.buttons.talk?.addEventListener('mouseup', () => this.releaseButton('talk'));
+      btn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        this.pressButton(buttonKey);
+      });
+      btn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        this.releaseButton(buttonKey);
+      });
+      btn.addEventListener('mousedown', () => this.pressButton(buttonKey));
+      btn.addEventListener('mouseup', () => this.releaseButton(buttonKey));
+    });
   },
 
   handleJoystickStart(e) {
@@ -443,21 +450,32 @@ const MobileControl = {
 
   pressButton(button) {
     this.buttonStates[button] = true;
+    this.pressedKeys.add(button);
+    
     if (this.buttons[button]) {
       this.buttons[button].classList.add('active');
     }
+    
+    // 즉시 키 입력 반영
+    this.updateInputKeys();
     this.executeButtonAction(button, true);
   },
 
   releaseButton(button) {
     this.buttonStates[button] = false;
+    this.pressedKeys.delete(button);
+    
     if (this.buttons[button]) {
       this.buttons[button].classList.remove('active');
     }
-    this.executeButtonAction(button, false);
+    
+    this.updateInputKeys();
   },
 
-  executeButtonAction(button, isPressed) {
+  updateInputKeys() {
+    if (!Input || !Input.keys) return;
+
+    // 모든 눌린 버튼을 키로 설정
     const keyMap = {
       'attack': 'z',
       'skill_q': 'q',
@@ -465,17 +483,45 @@ const MobileControl = {
       'skill_g': 'g',
       'interact': 'f',
       'talk': 'e',
-      'move_up': 'w',
-      'move_down': 's',
-      'move_left': 'a',
-      'move_right': 'd',
     };
 
-    const key = keyMap[button];
-    if (!key) return;
+    // 먼저 모든 버튼 키를 false로 초기화
+    Object.values(keyMap).forEach(key => {
+      Input.keys[key] = false;
+    });
 
-    if (Input && Input.keys) {
-      Input.keys[key] = isPressed;
+    // 눌린 버튼들의 키를 true로 설정
+    this.pressedKeys.forEach(button => {
+      const key = keyMap[button];
+      if (key) {
+        Input.keys[key] = true;
+      }
+    });
+  },
+
+  executeButtonAction(button, isPressed) {
+    if (!isPressed) return; // 떼어질 때는 실행 안 함
+
+    // 버튼 액션 실행
+    switch(button) {
+      case 'attack':
+        // Space/Z 키 시뮬레이션 - 게임에서 attack 처리
+        break;
+      case 'skill_q':
+        // Q 키 시뮬레이션
+        break;
+      case 'skill_r':
+        // R 키 시뮬레이션
+        break;
+      case 'skill_g':
+        // G 키 시뮬레이션
+        break;
+      case 'interact':
+        // F 키 시뮬레이션 - 장소 입장
+        break;
+      case 'talk':
+        // E 키 시뮬레이션 - NPC 대화
+        break;
     }
   },
 
