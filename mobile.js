@@ -1,8 +1,3 @@
-// ═══════════════════════════════════════════════════════════
-// 균균월드 - 모바일 터치 컨트롤 시스템 (개선판)
-// Mobile Touch Control System - FIXED VERSION
-// ═══════════════════════════════════════════════════════════
-
 const MobileControl = {
   enabled: false,
   isTouch: false,
@@ -40,12 +35,12 @@ const MobileControl = {
     };
 
     if (!this.isTouch()) {
-      console.log('모바일 터치 미지원');
+      console.log('모바일 미지원');
       return;
     }
 
     this.enabled = true;
-    console.log('모바일 터치 활성화');
+    console.log('모바일 활성화');
 
     this.createUI();
     this.setupEventListeners();
@@ -53,7 +48,6 @@ const MobileControl = {
   },
 
   createUI() {
-    // 조이스틱
     this.joystick.container = document.createElement('div');
     this.joystick.container.id = 'mobile-joystick-area';
     this.joystick.container.innerHTML = `
@@ -66,47 +60,27 @@ const MobileControl = {
     this.joystick.stick = this.joystick.container.querySelector('.joystick-stick');
     document.body.appendChild(this.joystick.container);
 
-    // 버튼들
     const buttonsContainer = document.createElement('div');
     buttonsContainer.id = 'mobile-buttons-area';
     buttonsContainer.innerHTML = `
       <div class="mobile-buttons-grid">
         <div class="battle-buttons left-column">
-          <button class="action-btn attack-btn" id="btn-attack" data-key="attack">
-            <span class="btn-label">🗡️</span>
-            <span class="btn-text">공격</span>
-          </button>
-          <button class="action-btn skill-btn q-btn" id="btn-skill-q" data-key="skill_q">
-            <span class="btn-label">💚</span>
-            <span class="btn-text">균즙</span>
-          </button>
+          <button class="action-btn attack-btn" id="btn-attack">🗡️<span>공격</span></button>
+          <button class="action-btn skill-btn q-btn" id="btn-skill-q">💚<span>균즙</span></button>
         </div>
         <div class="move-buttons right-column">
-          <button class="action-btn interact-btn" id="btn-interact" data-key="interact">
-            <span class="btn-label">🚪</span>
-            <span class="btn-text">입장</span>
-          </button>
-          <button class="action-btn talk-btn" id="btn-talk" data-key="talk">
-            <span class="btn-label">💬</span>
-            <span class="btn-text">대화</span>
-          </button>
+          <button class="action-btn interact-btn" id="btn-interact">🚪<span>입장</span></button>
+          <button class="action-btn talk-btn" id="btn-talk">💬<span>대화</span></button>
         </div>
         <div class="skill-buttons top-right">
-          <button class="action-btn skill-r-btn compact" id="btn-skill-r" data-key="skill_r">
-            <span class="btn-label">🔥</span>
-            <span class="btn-text">광폭</span>
-          </button>
-          <button class="action-btn skill-g-btn compact" id="btn-skill-g" data-key="skill_g">
-            <span class="btn-label">👑</span>
-            <span class="btn-text">복종</span>
-          </button>
+          <button class="action-btn skill-r-btn" id="btn-skill-r">🔥<span>광폭</span></button>
+          <button class="action-btn skill-g-btn" id="btn-skill-g">👑<span>복종</span></button>
         </div>
       </div>
     `;
 
     document.body.appendChild(buttonsContainer);
 
-    // 버튼 요소 저장
     this.buttons.attack = document.getElementById('btn-attack');
     this.buttons.skill_q = document.getElementById('btn-skill-q');
     this.buttons.skill_r = document.getElementById('btn-skill-r');
@@ -114,7 +88,6 @@ const MobileControl = {
     this.buttons.interact = document.getElementById('btn-interact');
     this.buttons.talk = document.getElementById('btn-talk');
 
-    // 버튼 상태 초기화
     Object.keys(this.buttons).forEach(key => {
       this.buttonStates[key] = false;
     });
@@ -128,7 +101,6 @@ const MobileControl = {
         bottom: 30px;
         left: 30px;
         z-index: 9998;
-        pointer-events: auto;
         touch-action: none;
       }
 
@@ -138,17 +110,14 @@ const MobileControl = {
         background: radial-gradient(circle at 30% 30%, rgba(255, 215, 0, 0.2), rgba(124, 58, 237, 0.15));
         border: 3px solid rgba(255, 215, 0, 0.3);
         border-radius: 50%;
-        position: relative;
-        box-shadow: inset 0 0 20px rgba(124, 58, 237, 0.2), 0 0 30px rgba(255, 215, 0, 0.15);
+        box-shadow: inset 0 0 20px rgba(124, 58, 237, 0.2);
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: background 0.2s ease;
       }
 
       .joystick-bg.active {
         background: radial-gradient(circle at 30% 30%, rgba(255, 215, 0, 0.35), rgba(124, 58, 237, 0.25));
-        box-shadow: inset 0 0 25px rgba(124, 58, 237, 0.3), 0 0 40px rgba(255, 215, 0, 0.25);
       }
 
       .joystick-stick {
@@ -160,17 +129,16 @@ const MobileControl = {
         position: absolute;
         top: 35px;
         left: 35px;
-        box-shadow: 0 0 15px rgba(255, 215, 0, 0.5), 0 5px 15px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
         transition: transform 0.05s linear;
-        cursor: grab;
       }
 
       #mobile-buttons-area {
         position: fixed;
         top: 0;
         left: 0;
-        right: 0;
-        bottom: 0;
+        width: 100%;
+        height: 100%;
         z-index: 9997;
         pointer-events: none;
       }
@@ -179,7 +147,6 @@ const MobileControl = {
         position: relative;
         width: 100%;
         height: 100%;
-        pointer-events: auto;
       }
 
       .battle-buttons.left-column {
@@ -189,7 +156,6 @@ const MobileControl = {
         display: flex;
         flex-direction: column;
         gap: 15px;
-        z-index: 9998;
         pointer-events: auto;
       }
 
@@ -200,7 +166,6 @@ const MobileControl = {
         display: flex;
         flex-direction: column;
         gap: 15px;
-        z-index: 9998;
         pointer-events: auto;
       }
 
@@ -209,130 +174,91 @@ const MobileControl = {
         top: 30px;
         right: 30px;
         display: flex;
-        flex-direction: row;
         gap: 12px;
-        z-index: 9998;
         pointer-events: auto;
       }
 
       .action-btn {
         width: 70px;
         height: 70px;
-        border-radius: 14px;
-        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
         background: linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(255, 215, 0, 0.1));
         color: #ffd700;
-        font-size: 1.4rem;
+        font-size: 2rem;
         font-weight: bold;
-        font-family: 'Jua', sans-serif;
         cursor: pointer;
-        transition: all 0.15s ease;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         gap: 2px;
-        position: relative;
-        overflow: hidden;
+        transition: all 0.15s ease;
       }
 
-      .action-btn .btn-label {
-        font-size: 1.8rem;
-        line-height: 1;
-      }
-
-      .action-btn .btn-text {
-        font-size: 0.65rem;
+      .action-btn span {
+        font-size: 0.6rem;
         letter-spacing: 0.5px;
         opacity: 0.7;
       }
 
-      .action-btn:hover {
-        background: linear-gradient(135deg, rgba(124, 58, 237, 0.5), rgba(255, 215, 0, 0.2));
-        border-color: rgba(255, 215, 0, 0.5);
-        box-shadow: 0 0 20px rgba(124, 58, 237, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
-        transform: translateY(-3px);
-      }
-
       .action-btn:active, .action-btn.active {
-        background: linear-gradient(135deg, rgba(124, 58, 237, 0.7), rgba(255, 215, 0, 0.3));
-        border-color: rgba(255, 215, 0, 0.8);
-        box-shadow: inset 0 0 10px rgba(124, 58, 237, 0.3), 0 0 25px rgba(255, 215, 0, 0.4);
         transform: scale(0.92);
+        box-shadow: inset 0 0 10px rgba(124, 58, 237, 0.3);
       }
 
       .action-btn.attack-btn {
         background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(255, 107, 107, 0.1));
-        border-color: rgba(239, 68, 68, 0.4);
       }
 
       .action-btn.attack-btn:active {
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.6), rgba(255, 107, 107, 0.3));
-        box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.3), 0 0 25px rgba(239, 68, 68, 0.4);
+        box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.3);
       }
 
       .action-btn.skill-btn.q-btn {
         background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(74, 222, 128, 0.1));
-        border-color: rgba(34, 197, 94, 0.4);
       }
 
       .action-btn.skill-btn.q-btn:active {
-        background: linear-gradient(135deg, rgba(34, 197, 94, 0.6), rgba(74, 222, 128, 0.3));
-        box-shadow: inset 0 0 10px rgba(34, 197, 94, 0.3), 0 0 25px rgba(34, 197, 94, 0.4);
+        box-shadow: inset 0 0 10px rgba(34, 197, 94, 0.3);
       }
 
       .action-btn.skill-r-btn {
         background: linear-gradient(135deg, rgba(255, 133, 27, 0.3), rgba(255, 152, 0, 0.1));
-        border-color: rgba(255, 133, 27, 0.4);
+        width: 60px;
+        height: 60px;
+        font-size: 1.6rem;
       }
 
       .action-btn.skill-r-btn:active {
-        background: linear-gradient(135deg, rgba(255, 133, 27, 0.6), rgba(255, 152, 0, 0.3));
-        box-shadow: inset 0 0 10px rgba(255, 133, 27, 0.3), 0 0 25px rgba(255, 133, 27, 0.4);
+        box-shadow: inset 0 0 10px rgba(255, 133, 27, 0.3);
       }
 
       .action-btn.skill-g-btn {
         background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(196, 181, 253, 0.1));
-        border-color: rgba(168, 85, 247, 0.4);
+        width: 60px;
+        height: 60px;
+        font-size: 1.6rem;
       }
 
       .action-btn.skill-g-btn:active {
-        background: linear-gradient(135deg, rgba(168, 85, 247, 0.6), rgba(196, 181, 253, 0.3));
-        box-shadow: inset 0 0 10px rgba(168, 85, 247, 0.3), 0 0 25px rgba(168, 85, 247, 0.4);
+        box-shadow: inset 0 0 10px rgba(168, 85, 247, 0.3);
       }
 
       .action-btn.interact-btn {
         background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(96, 165, 250, 0.1));
-        border-color: rgba(59, 130, 246, 0.4);
       }
 
       .action-btn.interact-btn:active {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.6), rgba(96, 165, 250, 0.3));
-        box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.3), 0 0 25px rgba(59, 130, 246, 0.4);
+        box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.3);
       }
 
       .action-btn.talk-btn {
         background: linear-gradient(135deg, rgba(236, 72, 153, 0.3), rgba(244, 114, 182, 0.1));
-        border-color: rgba(236, 72, 153, 0.4);
       }
 
       .action-btn.talk-btn:active {
-        background: linear-gradient(135deg, rgba(236, 72, 153, 0.6), rgba(244, 114, 182, 0.3));
-        box-shadow: inset 0 0 10px rgba(236, 72, 153, 0.3), 0 0 25px rgba(236, 72, 153, 0.4);
-      }
-
-      .action-btn.compact {
-        width: 60px;
-        height: 60px;
-        font-size: 1.2rem;
-      }
-
-      .action-btn.compact .btn-label {
-        font-size: 1.5rem;
-      }
-
-      .action-btn.compact .btn-text {
-        font-size: 0.55rem;
+        box-shadow: inset 0 0 10px rgba(236, 72, 153, 0.3);
       }
 
       body.battle-mode #mobile-joystick-area {
@@ -369,22 +295,64 @@ const MobileControl = {
     document.addEventListener('mousemove', (e) => this.handleJoystickMove(e));
     document.addEventListener('mouseup', (e) => this.handleJoystickEnd(e));
 
-    // 모든 버튼 이벤트
-    Object.keys(this.buttons).forEach(buttonKey => {
-      const btn = this.buttons[buttonKey];
-      if (!btn) return;
+    // 버튼들
+    this.setupButtonListener('attack', 'z');
+    this.setupButtonListener('skill_q', 'q');
+    this.setupButtonListener('skill_r', 'r');
+    this.setupButtonListener('skill_g', 'g');
+    this.setupButtonListener('interact', 'f');
+    this.setupButtonListener('talk', 'e');
+  },
 
-      btn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        this.pressButton(buttonKey);
-      });
-      btn.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        this.releaseButton(buttonKey);
-      });
-      btn.addEventListener('mousedown', () => this.pressButton(buttonKey));
-      btn.addEventListener('mouseup', () => this.releaseButton(buttonKey));
+  setupButtonListener(buttonName, keyCode) {
+    const btn = this.buttons[buttonName];
+    if (!btn) return;
+
+    btn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      this.emitKeyEvent('keydown', keyCode);
+      btn.classList.add('active');
     });
+
+    btn.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      this.emitKeyEvent('keyup', keyCode);
+      btn.classList.remove('active');
+    });
+
+    btn.addEventListener('mousedown', () => {
+      this.emitKeyEvent('keydown', keyCode);
+      btn.classList.add('active');
+    });
+
+    btn.addEventListener('mouseup', () => {
+      this.emitKeyEvent('keyup', keyCode);
+      btn.classList.remove('active');
+    });
+
+    btn.addEventListener('mouseleave', () => {
+      this.emitKeyEvent('keyup', keyCode);
+      btn.classList.remove('active');
+    });
+  },
+
+  emitKeyEvent(type, key) {
+    // 키 이벤트 생성
+    const event = new KeyboardEvent(type, {
+      key: key,
+      code: key.toUpperCase(),
+      keyCode: key.charCodeAt(0),
+      which: key.charCodeAt(0),
+      bubbles: true,
+      cancelable: true
+    });
+
+    window.dispatchEvent(event);
+
+    // Input 시스템에도 반영
+    if (Input && Input.keys) {
+      Input.keys[key.toLowerCase()] = (type === 'keydown');
+    }
   },
 
   handleJoystickStart(e) {
@@ -434,8 +402,8 @@ const MobileControl = {
       this.joystick.y = Math.sin(angle) * maxDistance;
     }
 
-    const stickX = (70 / 140) * 50 + this.joystick.x;
-    const stickY = (70 / 140) * 50 + this.joystick.y;
+    const stickX = 35 + this.joystick.x;
+    const stickY = 35 + this.joystick.y;
     this.joystick.stick.style.transform = `translate(${stickX}px, ${stickY}px)`;
   },
 
@@ -446,83 +414,6 @@ const MobileControl = {
     this.joystick.y = 0;
     this.joystick.stick.style.transform = 'translate(35px, 35px)';
     this.joystick.touchId = null;
-  },
-
-  pressButton(button) {
-    this.buttonStates[button] = true;
-    this.pressedKeys.add(button);
-    
-    if (this.buttons[button]) {
-      this.buttons[button].classList.add('active');
-    }
-    
-    // 즉시 키 입력 반영
-    this.updateInputKeys();
-    this.executeButtonAction(button, true);
-  },
-
-  releaseButton(button) {
-    this.buttonStates[button] = false;
-    this.pressedKeys.delete(button);
-    
-    if (this.buttons[button]) {
-      this.buttons[button].classList.remove('active');
-    }
-    
-    this.updateInputKeys();
-  },
-
-  updateInputKeys() {
-    if (!Input || !Input.keys) return;
-
-    // 모든 눌린 버튼을 키로 설정
-    const keyMap = {
-      'attack': 'z',
-      'skill_q': 'q',
-      'skill_r': 'r',
-      'skill_g': 'g',
-      'interact': 'f',
-      'talk': 'e',
-    };
-
-    // 먼저 모든 버튼 키를 false로 초기화
-    Object.values(keyMap).forEach(key => {
-      Input.keys[key] = false;
-    });
-
-    // 눌린 버튼들의 키를 true로 설정
-    this.pressedKeys.forEach(button => {
-      const key = keyMap[button];
-      if (key) {
-        Input.keys[key] = true;
-      }
-    });
-  },
-
-  executeButtonAction(button, isPressed) {
-    if (!isPressed) return; // 떼어질 때는 실행 안 함
-
-    // 버튼 액션 실행
-    switch(button) {
-      case 'attack':
-        // Space/Z 키 시뮬레이션 - 게임에서 attack 처리
-        break;
-      case 'skill_q':
-        // Q 키 시뮬레이션
-        break;
-      case 'skill_r':
-        // R 키 시뮬레이션
-        break;
-      case 'skill_g':
-        // G 키 시뮬레이션
-        break;
-      case 'interact':
-        // F 키 시뮬레이션 - 장소 입장
-        break;
-      case 'talk':
-        // E 키 시뮬레이션 - NPC 대화
-        break;
-    }
   },
 
   getMovement() {
@@ -555,3 +446,14 @@ const MobileControl = {
 document.addEventListener('DOMContentLoaded', () => {
   MobileControl.init();
 });
+
+// Input 시스템 오버라이드
+if (typeof Input !== 'undefined') {
+  const originalGetMovement = Input.getMovement.bind(Input);
+  Input.getMovement = function() {
+    if (MobileControl.enabled && MobileControl.joystick.active) {
+      return MobileControl.getMovement();
+    }
+    return originalGetMovement();
+  };
+}
