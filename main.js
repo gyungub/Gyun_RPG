@@ -170,6 +170,7 @@ function changeMap(mapId) {
   else if (mapId === 'skillroom')    map = new SkillRoom();
   else if (mapId === 'gyun-research-lab') map = new GyunResearchLab();
   else if (mapId === 'secret')       map = new GameMap('secret');
+  else if (mapId === 'central-hub')  map = new CentralHub();
   else                               map = new GameMap(mapId);
   
   // 맵별 플레이어 스폰 위치
@@ -184,23 +185,27 @@ function changeMap(mapId) {
   } else if (mapId === 'altar-below') {
     player.x = 1100; player.y = 160;
   } else if (mapId === 'truth-record') {
-    player.x = 250; player.y = 650;
+    player.x = 1180; player.y = 900;
   } else if (mapId === 'truth-memory') {
-    player.x = 1000; player.y = 400;
+    player.x = 1180; player.y = 200;
   } else if (mapId === 'truth-sealed') {
-    player.x = 1000; player.y = 800;
+    player.x = 1180; player.y = 900;
   } else if (mapId === 'library') {
-    player.x = 1200; player.y = 1200;
+    player.x = 1180; player.y = 1200;
   } else if (mapId === 'readingroom') {
-    player.x = 1200; player.y = 1000;
+    player.x = 600; player.y = 600;
   } else if (mapId === 'sealedroom') {
-    player.x = 1200; player.y = 1000;
+    player.x = 1180; player.y = 1200;
   } else if (mapId === 'upgraderoom') {
-    player.x = 1200; player.y = 1000;
+    player.x = 1180; player.y = 1200;
   } else if (mapId === 'skillroom') {
-    player.x = 1200; player.y = 1000;
+    player.x = 1180; player.y = 1200;
   } else if (mapId === 'gyun-research-lab') {
-    player.x = 800; player.y = 600;
+    player.x = 1180; player.y = 900;
+  } else if (mapId === 'central-hub') {
+    player.x = 6000; player.y = 3500;
+  } else if (mapId === 'secret') {
+    player.x = 1180; player.y = 1200;
   } else {
     player.x = 1180; player.y = 900;
   }
@@ -220,7 +225,9 @@ function drawMinimap() {
   ctx.save(); ctx.globalAlpha=0.85;
   ctx.fillStyle='#111'; roundRect(ctx,mx-2,my-2,mw+4,mh+4,8); ctx.fill();
   ctx.fillStyle='#c8a96e';
-  for (const p of map.paths) ctx.fillRect(mx+p.x*sx,my+p.y*sy,Math.max(1,p.w*sx),Math.max(1,p.h*sy));
+  if (map.paths) {
+    for (const p of map.paths) ctx.fillRect(mx+p.x*sx,my+p.y*sy,Math.max(1,p.w*sx),Math.max(1,p.h*sy));
+  }
   for (const z of map.zones) { ctx.fillStyle=z.color; ctx.fillRect(mx+z.x*sx,my+z.y*sy,Math.max(2,z.w*sx),Math.max(2,z.h*sy)); }
   ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(mx+player.cx*sx,my+player.cy*sy,3,0,Math.PI*2); ctx.fill();
   ctx.globalAlpha=1; ctx.restore();
@@ -240,8 +247,17 @@ function loop() {
     for (const book of map.books) book.showLabel = (book === nearBook);
   }
 
-  const camX = Math.max(0, Math.min(map.width - VW, player.cx - VW/2));
-  const camY = Math.max(0, Math.min(map.height - VH, player.cy - VH/2));
+  let camX, camY;
+  
+  // CentralHub는 특수 카메라 시스템 사용
+  if (map instanceof CentralHub) {
+    const camera = map.getCamera(player.x, player.y, VW, VH);
+    camX = camera.x;
+    camY = camera.y;
+  } else {
+    camX = Math.max(0, Math.min(map.width - VW, player.cx - VW/2));
+    camY = Math.max(0, Math.min(map.height - VH, player.cy - VH/2));
+  }
 
   ctx.clearRect(0, 0, VW, VH);
   map.draw(ctx, camX, camY, VW, VH);
@@ -291,7 +307,11 @@ window.addEventListener('keydown', (e) => {
         if (npc.hidden) continue;
         const px = player.x + player.w/2, py = player.y + player.h/2;
         const nx = npc.x + npc.w/2,       ny = npc.y + npc.h/2;
-        if (Math.hypot(px-nx, py-ny) < 120) {
+        
+        // CentralHub는 40x40 크기, 일반 맵은 60x60
+        const detectDist = (map instanceof CentralHub) ? 100 : 120;
+        
+        if (Math.hypot(px-nx, py-ny) < detectDist) {
           if (npc.id === 'upgrade-priest' && map instanceof UpgradeRoom) {
             map.openUI();
           } else if (npc.id === 'skill-master' && map instanceof SkillRoom) {
@@ -300,6 +320,10 @@ window.addEventListener('keydown', (e) => {
             map.openUI();
           } else if (npc.id === 'mutation-surgeon' && map instanceof AltarMutationDepth) {
             map.openUI();
+          } else if (map instanceof CentralHub) {
+            // CentralHub NPC 대화 - 랜덤 대사
+            const dialogue = npc.dialogue[Math.floor(Math.random() * npc.dialogue.length)];
+            alert(`【${npc.name}】\n\n${dialogue}`);
           } else {
             openNPCDialogue(npc.id);
           }
@@ -342,7 +366,13 @@ if (e.key.toLowerCase() === 'f' && curZone && !inGacha && !inWorship && !inBattl
   }
   else if (curZone.id === 'worship')            openWorship();
   else if (curZone.id === 'secret-worship')     changeMap('cult');
-  else if (curZone.id === 'battle' || curZone.id === 'secret-battle') openBattle();
+  else if (curZone.id === 'battle' || curZone.id === 'secret-battle') {
+    if (curZone.id === 'secret-battle') {
+      changeMap('central-hub');
+    } else {
+      openBattle();
+    }
+  }
   else if (curZone.id === 'secret')             changeMap('secret');
   else if (curZone.id === 'return')             changeMap('main');
   else if (curZone.id === 'forbidden-library')  changeMap('library');

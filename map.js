@@ -6,6 +6,9 @@ class GameMap {
       this.initMainMap();
     } else if (mapId === 'secret') {
       this.initSecretMap();
+    } else if (mapId === 'central-hub') {
+      // CentralHub 객체를 사용하도록 위임
+      return null; // GameMap 대신 CentralHub 사용
     }
   }
 
@@ -71,7 +74,7 @@ class GameMap {
     this.zones = [
       { id: 'gyun-research-lab',   label: '🔬 균균 연구소',     x: 1050, y: 50,   w: 300, h: 100, color: '#7c3aed', lc: '#5b21b6' },
       { id: 'secret-worship', label: '균 교단 본부',     x: 50,   y: 700,  w: 150, h: 200, color: '#7c3aed', lc: '#3c0839' },
-      { id: 'secret-battle',  label: '👑 보스 전투',     x: 2200, y: 700,  w: 150, h: 200, color: '#dc2626', lc: '#3f0000' },
+      { id: 'secret-battle',  label: '👑 중앙자치구',     x: 2200, y: 700,  w: 150, h: 200, color: '#f59e0b', lc: '#92400e' },
       { id: 'return',         label: '🔙 돌아가기',      x: 1050, y: 1450, w: 300, h: 100, color: '#6366f1', lc: '#1e1b4b' },
     ];
 
