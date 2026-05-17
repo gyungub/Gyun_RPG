@@ -228,9 +228,17 @@ function drawMinimap() {
   if (map.paths) {
     for (const p of map.paths) ctx.fillRect(mx+p.x*sx,my+p.y*sy,Math.max(1,p.w*sx),Math.max(1,p.h*sy));
   }
-  for (const z of map.zones) { ctx.fillStyle=z.color; ctx.fillRect(mx+z.x*sx,my+z.y*sy,Math.max(2,z.w*sx),Math.max(2,z.h*sy)); }
-  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(mx+player.cx*sx,my+player.cy*sy,3,0,Math.PI*2); ctx.fill();
-  ctx.globalAlpha=1; ctx.restore();
+  if (Array.isArray(map.zones)) {
+  for (const z of map.zones) {
+    ctx.fillStyle = z.color;
+    ctx.fillRect(
+      mx + z.x * sx,
+      my + z.y * sy,
+      Math.max(2, z.w * sx),
+      Math.max(2, z.h * sy)
+    );
+  }
+}
 }
 
 // ========== 게임 루프 ==========
